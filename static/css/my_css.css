@@ -1,0 +1,30 @@
+.navbar-default .navbar-brand {
+    color: #0e0e0e;
+}
+
+.navbar-custom .navbar-dark{
+  color: white;
+  background-color: #282B2F;
+}
+.image-logo {
+  display: inline;
+  width: 250px;
+  height: 50px;
+  background-image: url(../img/logo);
+  background-repeat: no-repeat;
+}
+.my-header {
+  color: white;
+  background-color: #282B2F;
+}
+
+.my-body {
+  color: white;
+  background-color: #282B2F;
+}
+.login-join-link {
+  float: right;
+}
+.test-for-check {
+  color: red;
+}

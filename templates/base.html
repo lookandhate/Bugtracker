@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="./static/css/my_css.css">
+
+    <title>{{title}}</title>
+</head>
+
+<body class="my-body">
+<header>
+    <nav class="navbar navbar-custom">
+
+      <div>
+        <a href="/index">
+        <img src="./static/img/logo3.png" width="250" height="50" alt="Bugtracker logo">
+        </a>
+      </div>
+
+      <div class="login-join-link">
+        <a href="/login"> Login </a>
+        <a href="/join"> Join </a>
+      </div>
+
+    </nav>
+
+    <h4 class="my-header">Bugtracker Project</h4>
+
+</header>
+<!-- Begin page content -->
+<main role="main" class="container">
+  <p>
+    test
+  </p>
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>
