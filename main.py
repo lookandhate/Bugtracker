@@ -42,10 +42,10 @@ def load_user(user_id):
 @app.route('/index')
 def index():
     session = db_session.create_session()
-    registred_users = len(session.query(User).all())
+    registered_users = len(session.query(User).all())
     title = 'debug'
     session.close()
-    return render_template('base.html', title=title, registred_users=registred_users)
+    return render_template('base.html', title=title, registred_users=registered_users)
 
 
 # Registration page
@@ -133,17 +133,22 @@ def logout():
 @login_required
 def profile(user_id):
     session = db_session.create_session()
+    registered_users = len(session.query(User).all())
 
     # Get data that we need
-    username = session.query(User.username).filter(User.id == user_id).first()
-    projects = session.query(User.projects).filter(User.id == user_id).first()
-    role = session.query(User.role).filter(User.id == user_id).first()
-    date_of_reg = session.query(User.created_date).filter(User.id == user_id).first()
+    username = session.query(User.username).filter(User.id == user_id).first()[0]
+    projects = session.query(User.projects).filter(User.id == user_id).first()[0]
+    role = session.query(User.role).filter(User.id == user_id).first()[0]
+    date_of_reg = session.query(User.created_date).filter(User.id == user_id).first()[0]
+
+    # Unpacking datetime.datetime object on time units
+    date_of_reg = f'{date_of_reg.day}-{date_of_reg.month}-{date_of_reg.year} at {date_of_reg.hour}:{date_of_reg.minute}:{date_of_reg.second}'
 
     session.close()
 
-    return render_template('profile.html', title=f'{username}', username=username, projects=projects, role=role,
-                           date_of_reg=date_of_reg)
+    return render_template('profile.html', title=f'{username}', id=user_id, username=username, projects=projects,
+                           role=role,
+                           date_of_reg=date_of_reg, registred_users=registered_users)
 
 
 @app.route('/favicon.ico')
@@ -158,4 +163,4 @@ if __name__ == '__main__':
 
     # logging.info(f'Running app on {HOST}:{PORT}, DEBUG_MODE: {DEBUG}')
     port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=1)

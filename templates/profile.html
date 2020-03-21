@@ -2,12 +2,18 @@
 {% block content %}
 
 <div class='my-body'>
-  Profle ID: {{ id }}
+  Profle ID: {{ id }} <br>
   Username: {{ username }} <br>
-  Projects :
-  {% for project in projects %}
-      <div>{{ project }}</div>
-  {% endfor %}
+  {% if projects != None %}
+      Projects:
+      {% for project in projects %}
+          <div>{{ project }}</div>
+      {% endfor %}
+
+  {% else %}
+      <div>This user doesn't have any projects yet</div>
+
+   {% endif %}
   <br>
   Role: {{ role }} <br>
   Date of registrate {{ date_of_reg }} <br>
