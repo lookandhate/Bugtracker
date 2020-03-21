@@ -23,11 +23,8 @@
       </div>
 
       {% if current_user.is_authenticated %}
-        <a class="login-join-link" href="/logout">{{ current_user.username }}</a>
-        <script>
-
-
-        </script>
+        <a href="/profile/{{ current_user.id }}">{{ current_user.username }}</a> <br>
+        <a href="/logout">Logout</a>
       {% else %}
         <div class="login-join-link">
           <form action="/login">

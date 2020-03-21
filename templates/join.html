@@ -1,13 +1,16 @@
+<head>
+  <link rel="stylesheet" href="../static/css/my_css.css">
+</head>
 {% extends "base.html" %}
 {% block content %}
 {% if message %}
-<h1> {{ message }} </h1>
+    <h1> {{ message }} </h1>
 {% endif %}
-<h1 class="my-body"> Fill this form to registrate on the site</h1>
+<h1 class="my-body"> Fill this form to registration on the site</h1>
 <form action="" method="post" novalidate>
-  {{ form.hidden_tag() }}
+    {{ form.hidden_tag() }}
 
-  <p>
+    <p>
         {{ form.username.label }} <br>
         {{ form.username(class="form-control") }} <br>
         {% for error in form.username.errors %}
@@ -15,9 +18,9 @@
         {{ error }}
     </div>
     {% endfor %}
-  </p>
+    </p>
 
-  <p>
+    <p>
         {{ form.password.label }} <br>
         {{ form.password(class="form-control") }} <br>
         {% for error in form.password.errors %}
@@ -25,9 +28,9 @@
         {{ error }}
     </div>
     {% endfor %}
-  </p>
+    </p>
 
-  <p> {{ form.submit(type="submit", class="btn btn-outline-primary") }}</p>
+    <p> {{ form.submit(type="submit", class="btn btn-outline-primary") }}</p>
 
 </form>
 

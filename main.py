@@ -136,19 +136,26 @@ def profile(user_id):
     registered_users = len(session.query(User).all())
 
     # Get data that we need
-    username = session.query(User.username).filter(User.id == user_id).first()[0]
-    projects = session.query(User.projects).filter(User.id == user_id).first()[0]
-    role = session.query(User.role).filter(User.id == user_id).first()[0]
-    date_of_reg = session.query(User.created_date).filter(User.id == user_id).first()[0]
+    username = session.query(User.username).filter(User.id == user_id).first()
 
-    # Unpacking datetime.datetime object on time units
-    date_of_reg = f'{date_of_reg.day}-{date_of_reg.month}-{date_of_reg.year} at {date_of_reg.hour}:{date_of_reg.minute}:{date_of_reg.second}'
+    # Checking is user exist
+    if username is not None:
+        username = username[0]
+        projects = session.query(User.projects).filter(User.id == user_id).first()[0]
+        role = session.query(User.role).filter(User.id == user_id).first()[0]
+        date_of_reg = session.query(User.created_date).filter(User.id == user_id).first()[0]
 
-    session.close()
+        # Unpacking datetime.datetime object on time units
+        date_of_reg = f'{date_of_reg.day}-{date_of_reg.month}-{date_of_reg.year} at {date_of_reg.hour}:{date_of_reg.minute}:{date_of_reg.second}'
 
-    return render_template('profile.html', title=f'{username}', id=user_id, username=username, projects=projects,
-                           role=role,
-                           date_of_reg=date_of_reg, registred_users=registered_users)
+        session.close()
+        return render_template('profile.html', title=f'{username}', id=user_id, username=username, projects=projects,
+                               role=role,
+                               date_of_reg=date_of_reg, registred_users=registered_users)
+
+    # If user doesn't exist, throw error page
+    return render_template('error.html', error_code=404, error_message='User has been deleted or wasn`t registered',
+                           registred_users=registered_users, styles=url_for('static', filename='css/my_css.css'))
 
 
 @app.route('/favicon.ico')
@@ -162,5 +169,5 @@ if __name__ == '__main__':
     db_session.global_init("db/bugtracker.sqlite")
 
     # logging.info(f'Running app on {HOST}:{PORT}, DEBUG_MODE: {DEBUG}')
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port, debug=1)
