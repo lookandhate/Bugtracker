@@ -157,4 +157,5 @@ if __name__ == '__main__':
     db_session.global_init("db/bugtracker.sqlite")
 
     # logging.info(f'Running app on {HOST}:{PORT}, DEBUG_MODE: {DEBUG}')
-    app.run(port=PORT, host=HOST, debug=DEBUG)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
