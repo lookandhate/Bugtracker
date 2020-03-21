@@ -24,8 +24,14 @@
 }
 .login-join-link {
   float: right;
-  display: inline-block;
+  display: flex;
+  flex-flow: row nowrap;
+  flex-grow: 1;
+  justify-content: flex-end;
+  padding: 10px 20px;
+  margin: 5px;
 }
+
 .test-for-check {
   color: red;
 }
