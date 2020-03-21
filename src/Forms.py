@@ -10,7 +10,14 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Remember me')
     submit = SubmitField('Login')
 
+
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Join!')
+
+
+class CreateProject(FlaskForm):
+    project_name = StringField('Project name', validators=[DataRequired()])
+    project_members = StringField('Type new project members with ; as separator')
+    submit = SubmitField('Create Project!')
