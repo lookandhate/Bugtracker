@@ -34,6 +34,14 @@
   margin: 5px;
 }
 
+.inline-links {
+  display: inline;
+}
+
+.debug-info {
+  visibility: visible;
+}
+
 .test-for-check {
   color: red;
 }
