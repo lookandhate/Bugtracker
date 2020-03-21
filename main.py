@@ -7,7 +7,7 @@ from flask import redirect
 from flask import url_for
 
 from flask_login import LoginManager
-from flask_login import login_user, login_required, logout_user
+from flask_login import login_user, login_required, logout_user, current_user
 
 # import logging
 from data.users import User
@@ -54,6 +54,7 @@ def login():
         user = session.query(User).filter(User.username == form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            print(current_user)
             return redirect("/")
         return render_template('login.html',
                                message="Неправильный логин или пароль",

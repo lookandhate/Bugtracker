@@ -22,10 +22,14 @@
         </a>
       </div>
 
-      <div class="login-join-link">
-        <a href="/login"> Login </a>
-        <a href="/join"> Join </a>
-      </div>
+      {% if current_user.is_authenticated %}
+        <a class="login-join-link" href="/logout">{{ current_user.username }}</a>
+      {% else %}
+        <div class="login-join-link">
+          <a href="/login"> Login  </a>
+          <a href="/join"> Join </a>
+        </div>
+      {% endif %}
 
     </nav>
 
