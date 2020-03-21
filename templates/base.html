@@ -24,10 +24,19 @@
 
       {% if current_user.is_authenticated %}
         <a class="login-join-link" href="/logout">{{ current_user.username }}</a>
+        <script>
+
+
+        </script>
       {% else %}
         <div class="login-join-link">
-          <a href="/login"> Login  </a>
-          <a href="/join"> Join </a>
+          <form action="/login">
+            <input class='btn btn-dark' type="submit" value="Login" />
+          </form>
+
+          <form action="/join">
+            <input class='btn btn-dark' type="submit" value="Join us" />
+          </form>
         </div>
       {% endif %}
 
@@ -38,9 +47,12 @@
 </header>
 <!-- Begin page content -->
 <main role="main" class="container">
-  <p>
-    test
-  </p>
+  <h1 align="left">
+    Work in progress
+  </h1>
+  <div align="left">
+    Registred users = {{ registred_users }}
+   </div>
     {% block content %}{% endblock %}
 </main>
 </body>

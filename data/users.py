@@ -8,6 +8,16 @@ from flask_login import UserMixin
 
 
 class User(SqlAlchemyBase, UserMixin):
+    """
+    Implementation of user table
+
+    id: it is a user unique id
+    username: it is a user choosed unique name
+    hashed_password: it is a md5 hashed password
+    created_date: it is a user profile creation date
+    role: It is user role on website( Admin or just a user)
+    """
+
     __tablename__ = 'users'
 
     id = sqlalchemy.Column(sqlalchemy.Integer,
@@ -16,6 +26,8 @@ class User(SqlAlchemyBase, UserMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
+    role = sqlalchemy.Column(sqlalchemy.String, default='User')
+    projects = sqlalchemy.Column(sqlalchemy.String, nullable=True)
 
     def check_password(self, password):
         # Here we checking if inputed password hash equal to hash in our database

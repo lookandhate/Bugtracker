@@ -24,6 +24,7 @@
 }
 .login-join-link {
   float: right;
+  display: inline-block;
 }
 .test-for-check {
   color: red;
