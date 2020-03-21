@@ -7,7 +7,7 @@
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
-    <link rel="stylesheet" href="./static/css/my_css.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/my_css.css') }}">
 
     <title>{{title}}</title>
 </head>
@@ -18,7 +18,7 @@
 
       <div>
         <a href="/index">
-        <img src="./static/img/logo3.png" width="250" height="50" alt="Bugtracker logo">
+        <img src="{{ url_for('static', filename='img/logo3.png') }}" width="250" height="50" alt="Bugtracker logo">
         </a>
       </div>
 
@@ -44,13 +44,30 @@
 </header>
 <!-- Begin page content -->
 <main role="main" class="container">
-  <h1 align="left">
+  <h1 class="debug-info" align="left">
     Work in progress
   </h1>
-  <div align="left">
-    Registred users = {{ registred_users }}
-   </div>
     {% block content %}{% endblock %}
 </main>
+<footer>
+  <div class="debug-info" align="left">
+    Registred users = {{ registred_users }}
+   </div>
+
+   <div class="debug-info">
+     Created Projetcs = {{ created_projects }}
+   </div>
+
+   <div class="debug-info">
+     Issues = {{ total_issues }}
+   </div>
+   <div class="debug-info">
+     ID = {{ current_user.id }}
+   </div>
+   
+</footer>
+
+
+
 </body>
 </html>
