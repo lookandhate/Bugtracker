@@ -3,13 +3,14 @@
 
 <div class='my-body'>
   Profle ID: {{ id }}
-  Username: {{ username }}
+  Username: {{ username }} <br>
   Projects :
   {% for project in projects %}
       <div>{{ project }}</div>
   {% endfor %}
-  Role: {{ role }}
-  Date of registrate {{ date_of_reg }}
+  <br>
+  Role: {{ role }} <br>
+  Date of registrate {{ date_of_reg }} <br>
 </div>
 
 {% endblock %}
