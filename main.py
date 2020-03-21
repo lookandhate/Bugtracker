@@ -72,7 +72,7 @@ def join():
 
 if __name__ == '__main__':
     #    logging.info('Init database session')
-    #   db_session.global_init("db/bugtracker.sqlite")
+    db_session.global_init("db/bugtracker.sqlite")
 
     # logging.info(f'Running app on {HOST}:{PORT}, DEBUG_MODE: {DEBUG}')
     app.run(port=PORT, host=HOST, debug=DEBUG)
