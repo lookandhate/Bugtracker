@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class='my-body'>
+  Profle ID: {{ id }}
+  Username: {{ username }}
+  Projects :
+  {% for project in projects %}
+      <div>{{ project }}</div>
+  {% endfor %}
+  Role: {{ role }}
+  Date of registrate {{ date_of_reg }}
+</div>
+
+{% endblock %}
