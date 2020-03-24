@@ -1,6 +1,10 @@
 import os
 import hashlib
 
+from data.models import association_table_user_to_project
+
+from sqlalchemy import update, delete
+
 from flask import render_template, send_from_directory, flash, url_for, redirect
 from flask import Flask
 
@@ -8,10 +12,10 @@ from flask_login import LoginManager
 from flask_login import login_user, login_required, logout_user, current_user
 
 # import logging
-from data.users import User, Project, Issue
-from src import Forms
-
+from data.models import User, Project, Issue
 from data import db_session
+
+from src import Forms
 
 # Init flask app
 app = Flask(__name__)
@@ -139,7 +143,10 @@ def profile(user_id):
     # Checking is user exist
     if username is not None:
         username = username[0]
-        projects = session.query(User.projects).filter(User.id == user_id).first()[0]
+        # Here we get all user project by iterating User.projects
+        projects = session.query(User.projects).filter(User.id == user_id).all()
+        print(projects)
+
         role = session.query(User.role).filter(User.id == user_id).first()[0]
         date_of_reg = session.query(User.created_date).filter(User.id == user_id).first()[0]
 
@@ -165,31 +172,30 @@ def profile_projects(user_id):
 
 
 @app.route('/profile/<user_id>/issues')
-@login.required
+@login_required
 def profile_issues(user_id):
     # TODO: Implement user Issues
     pass
-
 
 
 @app.route('/project/new', methods=['GET', 'POST'])
 @login_required
 def new_project():
     title = 'Create project'
-    creating_proj_form = Forms.CreateProject()
+    creating_project_form = Forms.CreateProject()
     session = db_session.create_session()
-    registred_users = len(session.query(User).all())
+    registered_users = len(session.query(User).all())
 
-    if creating_proj_form.validate_on_submit():
-        if session.query(Project).filter(Project.project_name == creating_proj_form.project_name.data).all():
+    if creating_project_form.validate_on_submit():
+        if session.query(Project).filter(Project.project_name == creating_project_form.project_name.data).all():
             session.close()
             return render_template('index.html',
                                    message="Project with that name already created",
-                                   form=creating_proj_form)
+                                   form=creating_project_form)
 
-        project = Project()
-        project.project_name = creating_proj_form.project_name.data
-        project.members = f'{current_user.username}:root;'
+        project = Project(project_name=creating_project_form.project_name.data)
+
+        project.members.append(current_user)
 
         # Commiting changes
         session.merge(project)
@@ -198,12 +204,21 @@ def new_project():
 
         # Re-creating session to update DB state
         session = db_session.create_session()
-        proj_id = \
-            session.query(Project.id).filter(Project.project_name == creating_proj_form.project_name.data).first()[0]
+        project_id = \
+            session.query(Project.id).filter(Project.project_name == creating_project_form.project_name.data).first()[0]
+
+        # Updating association table with new user role
+        upd = association_table_user_to_project.update().values(project_role='root').where(
+            association_table_user_to_project.c.member_id == current_user.id).where(association_table_user_to_project.c.project_id == project_id)
+        session.execute(upd)
+
+        session.commit()
         session.close()
-        return redirect(f'/projects/{proj_id}')
+        return redirect(f'/projects/{project_id}')
+
     session.close()
-    return render_template('new_project.html', title=title, form=creating_proj_form, registred_users=registred_users)
+    return render_template('new_project.html', title=title, form=creating_project_form,
+                           registred_users=registered_users)
 
 
 @app.route('/projects/<id>')
@@ -214,18 +229,15 @@ def project(id):
 
     registered_users = len(session.query(User).all())
 
-    # Get all project members
-    project_members = session.query(Project.members).filter(Project.id == id).first()
-
-    # Check does project exist
-    # If not then throw error page
-    if project_members is None:
-        return render_template('error.html', error_code=404, error_message='This project doesn`t exist',
-                               registred_users=registered_users)
+    project_object = session.query(Project).filter(Project.id == id).first()
+    print(project_object)
+    project_members = project_object.members
 
     # Check does current user have access to this project
     # If don`t, throw error page
-    if str(current_user.username) not in project_members[0] or current_user.role != 'Admin':
+    # print(list(members.keys()))
+    # print(current_user.username in list(members.keys()))
+    if str(current_user.username) not in list(members.keys()) and current_user.role != 'Admin':
         return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
 
     # If project exist and user have access to it, then return project page
@@ -248,6 +260,16 @@ def project(id):
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+@app.route('/dev')
+def check():
+    session = db_session.create_session()
+    user = session.query(User).first()
+    print(user.project_role)
+    user.extra_data = 'somehting'
+    print(user.project_role)
+    return redirect('/index')
 
 
 if __name__ == '__main__':
