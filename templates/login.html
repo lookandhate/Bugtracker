@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="my-body"> Already have an account? Complete the form to login</h1>
+
 {% if message %}
-<h1> {{ message }} </h1>
+  <h1> {{ message }} </h1>
 {% endif %}
 <form action="" method="post" novalidate>
   {{ form.hidden_tag() }}

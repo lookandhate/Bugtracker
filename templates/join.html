@@ -1,12 +1,10 @@
-<head>
-  <link rel="stylesheet" href="../static/css/my_css.css">
-</head>
 {% extends "base.html" %}
 {% block content %}
-{% if message %}
-    <h1> {{ message }} </h1>
-{% endif %}
 <h1 class="my-body"> Fill this form to registration on the site</h1>
+
+{% if message %}
+  <h1> {{ message }} </h1>
+{% endif %}
 <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
 
