@@ -1,34 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="inline-links">
-   <a href="/profile/{{ user.id }}/projects">User projects</a>
-   <a href="/profile/{{ user.id }}/issues">User issues</a>
-</div>
-
 <div class='my-body user-info'>
-  Profile ID: {{ user.id }} <br>
-  Username: {{ user.username }} <br>
+  <div class="inline-links">
+     <a href="/profile/{{ user.id }}/projects">User projects</a>
+     <a href="/profile/{{ user.id }}/issues">User issues</a>
+  </div>
+  <div>Profile ID: {{ user.id }}</div>
+  <div>Username: {{ user.username }}</div>
   {% if user.projects != None %}
-      Projects:
-      {% for project in user.projects %}
-          <div>{{ project }}</div>
-      {% endfor %}
-
+      <div>Total Projects: {{ user.projects|length }}</div>
   {% else %}
       <div>This user doesn't have any projects yet</div>
-
    {% endif %}
-  <br>
-  Role: {{ user.role }} <br>
-  Date of registration {{ user.created_date }} <br>
+  <div>Role: {{ user.role }}</div>
+  <div>Date of registration {{ user.created_date }}</div>
 </div>
 
 <div class="my-body">
   {% if current_user.id == user.id|int %}
     <a href="/project/new"> Create new project</a>
-  {% else %}
-    <h1>TEST</h1>
   {% endif %}
 </div>
 

@@ -6,11 +6,8 @@
   Project ID: {{ project.id }} <br>
   Project name: {{ project.project_name }} <br>
   Total project members: {{ project.members|length }}
-  <ol>
-  {% for member in project.members %}
-    <li><div class="project_member"><a href="/profile/{{ member.id }}">{{ member.username }}</a> - {{ member.project_role(project.id) }}</div></li>
-  {% endfor %}
-  </ol>
-  Date of creation {{ date_of_creation }} <br>
+  Date of creation {{ project.created_date }} <br>
+
+  <a href="/projects/{{ project.id }}/manage">Manage project</a>
 </div>
 {% endblock %}
