@@ -3,15 +3,12 @@
 
 <div class='my-body project-info'>
   <h1>Overview</h1>
-  Project ID: {{ id }} <br>
-  Project name: {{ project_name }} <br>
-  Total project members: {{ project_members|length }}
+  Project ID: {{ project.id }} <br>
+  Project name: {{ project.project_name }} <br>
+  Total project members: {{ project.members|length }}
   <ol>
-  {% for member in project_members %}
-    <div class="project-member">
-      {% set member_and_role = member.split(':') %}
-        <li>{{ member_and_role[0] }} - {{ member_and_role[1] }}</li>
-    </div>
+  {% for member in project.members %}
+    <li><div class="project_member"><a href="/profile/{{ member.id }}">{{ member.username }}</a> - {{ member.project_role(project.id) }}</div></li>
   {% endfor %}
   </ol>
   Date of creation {{ date_of_creation }} <br>

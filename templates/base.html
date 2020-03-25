@@ -9,7 +9,7 @@
           crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/my_css.css') }}">
 
-    <title>{{title}}</title>
+    <title>{{ title }}</title>
 </head>
 
 <body class="my-body">
@@ -39,32 +39,37 @@
 
     </nav>
 
-    <h4 class="my-header">Bugtracker Project</h4>
+    <h4 class="my-header">Bug-tracker Project</h4>
 
 </header>
 <!-- Begin page content -->
 <main role="main" class="container">
-  <h1 class="debug-info" align="left">
-    Work in progress
-  </h1>
     {% block content %}{% endblock %}
 </main>
 <footer>
-  <div class="debug-info" align="left">
-    Registred users = {{ registred_users }}
-   </div>
+    <div class="debug-info" align="left">
+      <div>
+        Registered users = {{ registred_users }}
+       </div>
 
-   <div class="debug-info">
-     Created Projetcs = {{ created_projects }}
-   </div>
+       <div>
+         Created projetcs = {{ created_projects if created_projects else None }}
+       </div>
 
-   <div class="debug-info">
-     Issues = {{ total_issues }}
-   </div>
-   <div class="debug-info">
-     ID = {{ current_user.id }}
-   </div>
-   
+       <div>
+         Issues = {{ total_issues if total_issues else None }}
+       </div>
+
+        <div>
+          {% if current_user.is_authenticated %}
+            Your ID = {{ current_user.id }} <br>
+            You are {{ current_user.role }}
+          {% else %}
+            You are not authenticated
+          {% endif %}
+       </div>
+    </div>
+
 </footer>
 
 

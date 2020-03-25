@@ -30,6 +30,12 @@ PORT, HOST = 8080, "127.0.0.1"
 DEBUG = True
 
 
+# Some debug info for me
+def debug_info():
+    session = db_session.create_session()
+    registered_users = len(session.query(User).all())
+
+
 # Loading current user
 @login_manager.user_loader
 def load_user(user_id):
@@ -56,7 +62,7 @@ def join():
     title = 'Join us'
 
     session = db_session.create_session()
-    registred_users = len(session.query(User).all())
+    registered_users = len(session.query(User).all())
 
     # Registration form
     form = Forms.RegistrationForm()
@@ -94,7 +100,7 @@ def join():
         flash('Your account has been created and now you are able to log in', 'success')
         return redirect('/index')
     session.close()
-    return render_template('join.html', title=title, form=form, registred_users=registred_users)
+    return render_template('join.html', title=title, form=form, registred_users=registered_users)
 
 
 # Login page
@@ -111,14 +117,13 @@ def login():
         user = session.query(User).filter(User.username == form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            print(current_user)
-
             session.close()
 
-        session.close()
-        return render_template('login.html',
-                               message="Неправильный логин или пароль",
-                               form=form)
+        else:
+            session.close()
+            return render_template('login.html',
+                                   message="Неправильный логин или пароль",
+                                   form=form)
     session.close()
     return render_template('login.html', title=title, form=form, registred_users=registred_users)
 
@@ -138,26 +143,12 @@ def profile(user_id):
     registered_users = len(session.query(User).all())
 
     # Get data that we need
-    username = session.query(User.username).filter(User.id == user_id).first()
+    user = session.query(User).filter(User.id == user_id).first()
 
     # Checking is user exist
-    if username is not None:
-        username = username[0]
-        # Here we get all user project by iterating User.projects
-        projects = session.query(User.projects).filter(User.id == user_id).all()
-        print(projects)
-
-        role = session.query(User.role).filter(User.id == user_id).first()[0]
-        date_of_reg = session.query(User.created_date).filter(User.id == user_id).first()[0]
-
-        # Unpacking datetime.datetime object on time units
-        date_of_reg = f'{date_of_reg.day}-{date_of_reg.month}-{date_of_reg.year} at {date_of_reg.hour}:' \
-                      f'{date_of_reg.minute}:{date_of_reg.second}'
-
-        session.close()
-        return render_template('profile.html', title=f'{username}', id=user_id, username=username, projects=projects,
-                               role=role,
-                               date_of_reg=date_of_reg, registred_users=registered_users)
+    if user is not None:
+        return render_template('profile.html', title=f'{user.username}', id=user_id, user=user,
+                               registred_users=registered_users)
 
     # If user doesn't exist, throw error page
     return render_template('error.html', error_code=404, error_message='User has been deleted or wasn`t registered',
@@ -167,7 +158,9 @@ def profile(user_id):
 @app.route('/profile/<user_id>/projects')
 @login_required
 def profile_projects(user_id):
-    # TODO: Implement user Projects
+    session = db_session.create_session()
+    registered_users = len(session.query(User).all())
+
     pass
 
 
@@ -209,7 +202,8 @@ def new_project():
 
         # Updating association table with new user role
         upd = association_table_user_to_project.update().values(project_role='root').where(
-            association_table_user_to_project.c.member_id == current_user.id).where(association_table_user_to_project.c.project_id == project_id)
+            association_table_user_to_project.c.member_id == current_user.id).where(
+            association_table_user_to_project.c.project_id == project_id)
         session.execute(upd)
 
         session.commit()
@@ -230,14 +224,11 @@ def project(id):
     registered_users = len(session.query(User).all())
 
     project_object = session.query(Project).filter(Project.id == id).first()
-    print(project_object)
-    project_members = project_object.members
 
     # Check does current user have access to this project
     # If don`t, throw error page
-    # print(list(members.keys()))
-    # print(current_user.username in list(members.keys()))
-    if str(current_user.username) not in list(members.keys()) and current_user.role != 'Admin':
+
+    if current_user not in list(project_object.members) and current_user.role != 'Admin':
         return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
 
     # If project exist and user have access to it, then return project page
@@ -246,14 +237,28 @@ def project(id):
     date_of_creation = f'{date_of_creation.day}-{date_of_creation.month}-{date_of_creation.year} at {date_of_creation.hour}:' \
                        f'{date_of_creation.minute}:{date_of_creation.second}'
 
-    project_members = str(_project.members).split(';')
-    if '' in project_members:
-        project_members.pop(project_members.index(''))
+    return render_template('project.html', project=project_object)
 
-    return render_template('project.html', id=id, project_name=_project.project_name,
-                           project_members=project_members,
-                           project_issues=str(_project.issues).split(';'),
-                           date_of_creation=date_of_creation)
+
+@app.route('/projects/<id>/manage')
+@login_required
+def manage_project(id):
+    # Creating db session
+    session = db_session.create_session()
+
+    registered_users = len(session.query(User).all())
+
+    project_object = session.query(Project).filter(Project.id == id).first()
+
+    # Check does current user have access manage to this project
+    # If don`t, throw error page
+    print(current_user.project_role(project_object.id))
+    if (current_user.project_role(project_object.id) != 'root' or current_user.project_role(
+            project_object.id) != 'manager') \
+            and current_user.role != 'Admin':
+        return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
+
+    return render_template('manage_project.html', project=project_object)
 
 
 @app.route('/favicon.ico')
