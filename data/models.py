@@ -4,7 +4,7 @@ import hashlib
 
 from .db_session import SqlAlchemyBase, create_session
 
-from sqlalchemy import orm
+from sqlalchemy import orm, select
 from flask_login import UserMixin
 
 association_table_user_to_issue = sqlalchemy.Table('user_to_issue', SqlAlchemyBase.metadata,
@@ -82,19 +82,20 @@ class User(SqlAlchemyBase, UserMixin):
 
         session = create_session()
         result = session.execute(
-            association_table_user_to_project.select([association_table_user_to_project.c.project_role]).where(
+            select([association_table_user_to_project.c.project_role]).where(
                 association_table_user_to_project.c.member_id == self.id).where(
                 association_table_user_to_project.c.project_id == project_id)
-        )
+        ).fetchone()['project_role']
         return result
 
     def project_date_of_add(self, project_id):
         session = create_session()
         result = session.execute(
-            association_table_user_to_project.select([association_table_user_to_project.c.date_of_add]).where(
+            select([association_table_user_to_project.c.date_of_add]).where(
                 association_table_user_to_project.c.member_id == self.id).where(
                 association_table_user_to_project.c.project_id == project_id)
-        )
+        ).fetchone()['date_of_add']
+
         return result
 
 
