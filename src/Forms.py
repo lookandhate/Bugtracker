@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, F
 from wtforms.validators import DataRequired
 
 
@@ -21,3 +21,7 @@ class CreateProject(FlaskForm):
     project_name = StringField('Project name', validators=[DataRequired()])
     project_members = StringField('Type new project members with ; as separator')
     submit = SubmitField('Create Project!')
+
+
+class CreateIssue(FlaskForm):
+    pass
