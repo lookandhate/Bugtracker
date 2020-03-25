@@ -252,13 +252,28 @@ def manage_project(id):
 
     # Check does current user have access manage to this project
     # If don`t, throw error page
-    print(current_user.project_role(project_object.id))
-    if (current_user.project_role(project_object.id) != 'root' or current_user.project_role(
+    if (current_user.project_role(project_object.id) != 'root' and current_user.project_role(
             project_object.id) != 'manager') \
             and current_user.role != 'Admin':
         return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
 
     return render_template('manage_project.html', project=project_object)
+
+
+@app.route('/projects/<id>/new_issue')
+@login_required
+def create_issue(project_id):
+    # TODO implement creating issue page
+    # Creating db session
+    session = db_session.create_session()
+
+    registered_users = len(session.query(User).all())
+
+    project_object = session.query(Project).filter(Project.id == id).first()
+    if current_user not in project_object.members:
+        return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
+
+    create_issue_form = None
 
 
 @app.route('/favicon.ico')
