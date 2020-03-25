@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div id="wrapper">
+  <div id='member-block' class='members-block'>
+    <ol>
+      {% for member in project.members %}
+        {% if loop.index < 10 %}
+          <li>
+            <div class='project-member'>
+              <details>
+                  <summary><a href="/profile/{{ member.id }}">{{ member.username }}</a><br>Click to see more</summary>
+                  Date of adding user to the project: {{ member.project_date_of_add(project.id) }} <br>
+                  Project role: {{ member.project_date_of_add(project.id) }} <br>
+                  Issues: Work in progress <br>
+              </details>
+          </div>
+        </li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </div>
+
+  <div id='issues-block' class='issues-block'></div>
+</div>
+{% endblock %}
