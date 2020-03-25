@@ -2,7 +2,7 @@ import datetime
 import sqlalchemy
 import hashlib
 
-from .db_session import SqlAlchemyBase
+from .db_session import SqlAlchemyBase, create_session
 
 from sqlalchemy import orm
 from flask_login import UserMixin
@@ -18,7 +18,9 @@ association_table_user_to_project = sqlalchemy.Table('user_to_project', SqlAlche
                                                                        sqlalchemy.ForeignKey('users.id')),
                                                      sqlalchemy.Column('project_id', sqlalchemy.Integer,
                                                                        sqlalchemy.ForeignKey('projects.id')),
-                                                     sqlalchemy.Column('project_role', sqlalchemy.String)
+                                                     sqlalchemy.Column('project_role', sqlalchemy.String),
+                                                     sqlalchemy.Column('date_of_add', sqlalchemy.DateTime,
+                                                                       default=datetime.datetime.now)
                                                      )
 
 association_table_project_to_issue = sqlalchemy.Table('project_to_issue', SqlAlchemyBase.metadata,
@@ -71,6 +73,30 @@ class User(SqlAlchemyBase, UserMixin):
         h = hashlib.new('md5', bytes(password, encoding='utf8'))
         return h.hexdigest() == self.hashed_password
 
+    def project_role(self, project_id):
+        '''
+
+        :param project_id: ID of the project from which we want the user role
+        :return: None if user not in that project
+        '''
+
+        session = create_session()
+        result = session.execute(
+            association_table_user_to_project.select([association_table_user_to_project.c.project_role]).where(
+                association_table_user_to_project.c.member_id == self.id).where(
+                association_table_user_to_project.c.project_id == project_id)
+        )
+        return result
+
+    def project_date_of_add(self, project_id):
+        session = create_session()
+        result = session.execute(
+            association_table_user_to_project.select([association_table_user_to_project.c.date_of_add]).where(
+                association_table_user_to_project.c.member_id == self.id).where(
+                association_table_user_to_project.c.project_id == project_id)
+        )
+        return result
+
 
 class Project(SqlAlchemyBase):
     """
@@ -116,7 +142,6 @@ class Issue(SqlAlchemyBase):
     tracking = sqlalchemy.Column(sqlalchemy.String, unique=True)
     priority = sqlalchemy.Column(sqlalchemy.String, index=True)
     state = sqlalchemy.Column(sqlalchemy.String)
-
 
     def __repr__(self):
         return f'Issue name={self.tracking}; id={self.id}'
