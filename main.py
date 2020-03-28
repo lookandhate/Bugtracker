@@ -5,11 +5,14 @@ from data.models import association_table_user_to_project
 
 from sqlalchemy import update, delete
 
-from flask import render_template, send_from_directory, flash, url_for, redirect
+from flask import render_template, send_from_directory, flash, url_for, redirect, request
 from flask import Flask
 
 from flask_login import LoginManager
 from flask_login import login_user, login_required, logout_user, current_user
+
+from flask_admin import Admin, AdminIndexView
+from flask_admin.contrib.sqla import ModelView
 
 # import logging
 from data.models import User, Project, Issue
@@ -17,23 +20,51 @@ from data import db_session
 
 from src import Forms
 
+
+# MyModelView for admin panel
+class MyModelView(ModelView):
+    def is_accessible(self):
+        if current_user.is_authenticated:
+            return current_user.role == 'Admin'
+        return False
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('access_restricted', from_page='admin', message='Test', code='403'))
+
+
+# AdminIndexView for admin panel
+class MyAdminIndexView(AdminIndexView):
+    def is_accessible(self):
+        if current_user.is_authenticated:
+            return current_user.role == 'Admin'
+        return False
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('access_restricted', from_page='admin', message='Test', code='403'))
+
+
 # Init flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my temp secret key'
+
+db_session.global_init("db/bugtracker.sqlite")
 
 # Init login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+# Create session for flask-admin
+session = db_session.create_session()
+admin = Admin(app, index_view=MyAdminIndexView())
+
+# Add all our models to flask-admin
+admin.add_view(MyModelView(User, session))
+admin.add_view(MyModelView(Project, session))
+admin.add_view(MyModelView(Issue, session))
+
 # Port, IP address and debug mode
 PORT, HOST = 8080, "127.0.0.1"
 DEBUG = True
-
-
-# Some debug info for me
-def debug_info():
-    session = db_session.create_session()
-    registered_users = len(session.query(User).all())
 
 
 # Loading current user
@@ -51,7 +82,7 @@ def load_user(user_id):
 def index():
     session = db_session.create_session()
     registered_users = len(session.query(User).all())
-    title = 'debug'
+    title = 'Index'
     session.close()
     return render_template('base.html', title=title, registred_users=registered_users)
 
@@ -91,6 +122,9 @@ def join():
         # Here we use not password but its hash
         user.hashed_password = password_hash.hexdigest()
 
+        user.reg_ip = request.remote_addr
+        user.last_ip = request.remote_addr
+
         # Adding user to database
         session.merge(user)
         # Commiting changes
@@ -117,6 +151,8 @@ def login():
         user = session.query(User).filter(User.username == form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
+            user.last_ip = request.remote_addr
+            session.commit()
             session.close()
 
         else:
@@ -151,8 +187,11 @@ def profile(user_id):
                                registred_users=registered_users)
 
     # If user doesn't exist, throw error page
-    return render_template('error.html', error_code=404, error_message='User has been deleted or wasn`t registered',
-                           registred_users=registered_users)
+    # TODO Change render on redirect
+    # TODO Implement not_found page
+    return redirect(url_for('not_found', from_page='profile', message='User has been deleted or wasn`t registered', code='404'))
+    # return render_template('error.html', error_code=404, error_message='User has been deleted or wasn`t registered',
+    #                        registred_users=registered_users)
 
 
 @app.route('/profile/<user_id>/projects')
@@ -161,7 +200,9 @@ def profile_projects(user_id):
     session = db_session.create_session()
     registered_users = len(session.query(User).all())
 
-    pass
+    user = session.query(User).filter(User.id == user_id).first()
+    print(user.projects)
+    return render_template('user_projects.html', user=user)
 
 
 @app.route('/profile/<user_id>/issues')
@@ -186,7 +227,8 @@ def new_project():
                                    message="Project with that name already created",
                                    form=creating_project_form)
 
-        project = Project(project_name=creating_project_form.project_name.data)
+        project = Project(project_name=creating_project_form.project_name.data,
+                          description=creating_project_form.project_description.data)
 
         project.members.append(current_user)
 
@@ -229,7 +271,8 @@ def project(id):
     # If don`t, throw error page
 
     if current_user not in list(project_object.members) and current_user.role != 'Admin':
-        return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
+        return redirect(url_for('access_restricted', from_page='projects', message='Test', code='403'))
+
 
     # If project exist and user have access to it, then return project page
     _project = session.query(Project).filter(Project.id == id).first()
@@ -237,7 +280,7 @@ def project(id):
     date_of_creation = f'{date_of_creation.day}-{date_of_creation.month}-{date_of_creation.year} at {date_of_creation.hour}:' \
                        f'{date_of_creation.minute}:{date_of_creation.second}'
 
-    return render_template('project.html', project=project_object)
+    return render_template('project.html', project=project_object, date_of_creation=date_of_creation)
 
 
 @app.route('/projects/<id>/manage')
@@ -249,15 +292,21 @@ def manage_project(id):
     registered_users = len(session.query(User).all())
 
     project_object = session.query(Project).filter(Project.id == id).first()
+    change_project_property = Forms.ChangeProjectProperties(
+        project_name=project_object.project_name,
+        project_description=project_object.description,
+    )
+    project_members = project_object.members
+    change_project_property.project_owner.choices = [(m.id, m.username) for m in project_members]
 
     # Check does current user have access manage to this project
     # If don`t, throw error page
     if (current_user.project_role(project_object.id) != 'root' and current_user.project_role(
             project_object.id) != 'manager') \
             and current_user.role != 'Admin':
-        return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
+        return redirect(url_for('access_restricted', from_page='manage_project', message='Test', code='403'))
 
-    return render_template('manage_project.html', project=project_object)
+    return render_template('manage_project.html', form=change_project_property, project=project_object)
 
 
 @app.route('/projects/<id>/new_issue')
@@ -271,7 +320,8 @@ def create_issue(project_id):
 
     project_object = session.query(Project).filter(Project.id == id).first()
     if current_user not in project_object.members:
-        return render_template('error.html', error_code=403, error_message='You don`t have access to this project')
+        return redirect(url_for('access_restricted', from_page='projects', message='Test', code='403'))
+
 
     create_issue_form = None
 
@@ -280,6 +330,11 @@ def create_issue(project_id):
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
+@app.route('/access_restricted/<from_page>/<message>/<code>')
+def access_restricted(from_page, message='You don`t have access to this page', code=403):
+    return render_template('error.html', page=from_page, error_code=code, error_message=message)
 
 
 @app.route('/dev')
@@ -294,7 +349,6 @@ def check():
 
 if __name__ == '__main__':
     #    logging.info('Init database session')
-    db_session.global_init("db/bugtracker.sqlite")
 
     # logging.info(f'Running app on {HOST}:{PORT}, DEBUG_MODE: {DEBUG}')
     port = int(os.environ.get("PORT", 8080))
