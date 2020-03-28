@@ -6,8 +6,7 @@
 <h1 class="my-body">Fill this to create new project</h1>
 <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
-
-    <p>
+    <div>
         {{ form.project_name.label }} <br>
         {{ form.project_name(class="form-control") }} <br>
         {% for error in form.project_name.errors %}
@@ -15,7 +14,16 @@
         {{ error }}
     </div>
     {% endfor %}
-    </p>
+    </div>
+    <div>
+        {{ form.description.label }} <br>
+        {{ form.description(class="form-control") }} <br>
+        {% for error in form.description.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </div>
     <p> {{ form.submit(type="submit", class="btn btn-outline-primary") }}</p>
 
 </form>

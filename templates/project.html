@@ -2,12 +2,18 @@
 {% block content %}
 
 <div class='my-body project-info'>
-  <h1>Overview</h1>
-  Project ID: {{ project.id }} <br>
-  Project name: {{ project.project_name }} <br>
-  Total project members: {{ project.members|length }}
-  Date of creation {{ project.created_date }} <br>
+  <h1>{{ project.project_name }} </h1>
+  <div class="project-element">
+    {{ project.description }}
+  </div>
 
-  <a href="/projects/{{ project.id }}/manage">Manage project</a>
+  {% if current_user.project_role(project.id) == 'root' or 'manager' or current_user.role =='admin' %}
+    <div class='root-project-info'>
+      Project ID: {{ project.id }} <br>
+      Total project members: {{ project.members|length }} <br>
+      Date of creation {{ project.created_date }} <br>
+      <a href="/projects/{{ project.id }}/manage">Manage project</a>
+    </div>
+  {% endif %}
 </div>
 {% endblock %}

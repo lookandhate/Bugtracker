@@ -1,20 +1,23 @@
+* {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 15px;
+}
+
 .navbar {
   background-color: #333333;
-  margin-left: 0px;
+  margin-left: 0px !important;
 }
 
 .navbar-default .navbar-brand {
     color: #0e0e0e;
     background-color: #6495ED;
-    margin-left: 0px;
+    margin-left: 0px ;
 }
 
 .navbar-custom .navbar-dark{
-  float: right;
-  display: flex;
+  margin-left: 0px;
   color: white;
   background-color: #6495ED;
-  margin-left: 0px;
 }
 
 #wrapper{
@@ -42,7 +45,7 @@
 .my-body {
   color: white;
   background-color: #282B2F;
-  margin-left: 100px; /* Same as the width of the sidebar */
+  margin-left: 100px;
   padding: 0px 10px;
 }
 
@@ -58,6 +61,24 @@
 
 .inline-links {
   display: inline;
+}
+
+.project-element, .project-member, .issues-element{
+  display: flex;
+  flex-direction: column;
+
+  width: 90%;
+
+  border-style: solid;
+  border-width: 2px;
+  border-radius: 5px;
+  border-color: #475159;
+
+  margin-bottom: 20px;
+}
+.project-desc{
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
 }
 
 .debug-info {
