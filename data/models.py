@@ -50,6 +50,10 @@ class User(SqlAlchemyBase, UserMixin):
                            primary_key=True, autoincrement=True)
     username = sqlalchemy.Column(sqlalchemy.String, nullable=False, unique=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
+    reg_ip = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    last_ip = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
     role = sqlalchemy.Column(sqlalchemy.String, default='User')
@@ -120,6 +124,8 @@ class Project(SqlAlchemyBase):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
 
+    description = sqlalchemy.Column(sqlalchemy.String(256))
+    short_project_tag = sqlalchemy.Column(sqlalchemy.String, unique=True)
     issues = orm.relation('Issue', secondary=association_table_project_to_issue, backref='project_issues')
 
     def __repr__(self):
