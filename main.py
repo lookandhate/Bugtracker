@@ -5,7 +5,7 @@ from data.models import association_table_user_to_project
 
 from sqlalchemy import update, delete
 
-from flask import render_template, send_from_directory, flash, url_for, redirect, request
+from flask import render_template, send_from_directory, flash, url_for, redirect, request, abort
 from flask import Flask
 
 from flask_login import LoginManager
@@ -19,6 +19,10 @@ from data.models import User, Project, Issue
 from data import db_session
 
 from src import Forms
+
+########################################################################################################################
+############################################# Init PORT, HOST AND ADMIN PANEL OBJECTS ##################################
+########################################################################################################################
 
 
 # MyModelView for admin panel
@@ -55,7 +59,7 @@ login_manager.init_app(app)
 
 # Create session for flask-admin
 session = db_session.create_session()
-admin = Admin(app, index_view=MyAdminIndexView())
+admin = Admin(app, index_view=MyAdminIndexView(), template_mode='bootstrap3')
 
 # Add all our models to flask-admin
 admin.add_view(MyModelView(User, session))
@@ -63,9 +67,12 @@ admin.add_view(MyModelView(Project, session))
 admin.add_view(MyModelView(Issue, session))
 
 # Port, IP address and debug mode
-PORT, HOST = 8080, "127.0.0.1"
+PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
 DEBUG = True
 
+########################################################################################################################
+######################################## APP ROUTES BELOW ##############################################################
+########################################################################################################################
 
 # Loading current user
 @login_manager.user_loader
@@ -132,7 +139,7 @@ def join():
         session.close()
 
         flash('Your account has been created and now you are able to log in', 'success')
-        return redirect('/index')
+        return redirect(url_for('index'))
     session.close()
     return render_template('join.html', title=title, form=form, registred_users=registered_users)
 
@@ -144,7 +151,7 @@ def login():
     form = Forms.LoginForm()
 
     session = db_session.create_session()
-    registred_users = len(session.query(User).all())
+    registered_users = len(session.query(User).all())
 
     if form.validate_on_submit():
         session = db_session.create_session()
@@ -161,7 +168,7 @@ def login():
                                    message="Неправильный логин или пароль",
                                    form=form)
     session.close()
-    return render_template('login.html', title=title, form=form, registred_users=registred_users)
+    return render_template('login.html', title=title, form=form, registred_users=registered_users)
 
 
 # Logout page
@@ -187,9 +194,7 @@ def profile(user_id):
                                registred_users=registered_users)
 
     # If user doesn't exist, throw error page
-    # TODO Change render on redirect
-    # TODO Implement not_found page
-    return redirect(url_for('not_found', from_page='profile', message='User has been deleted or wasn`t registered', code='404'))
+    abort(404)
     # return render_template('error.html', error_code=404, error_message='User has been deleted or wasn`t registered',
     #                        registred_users=registered_users)
 
@@ -271,8 +276,7 @@ def project(id):
     # If don`t, throw error page
 
     if current_user not in list(project_object.members) and current_user.role != 'Admin':
-        return redirect(url_for('access_restricted', from_page='projects', message='Test', code='403'))
-
+        abort(403, message="You don't have access to this project")
 
     # If project exist and user have access to it, then return project page
     _project = session.query(Project).filter(Project.id == id).first()
@@ -304,7 +308,7 @@ def manage_project(id):
     if (current_user.project_role(project_object.id) != 'root' and current_user.project_role(
             project_object.id) != 'manager') \
             and current_user.role != 'Admin':
-        return redirect(url_for('access_restricted', from_page='manage_project', message='Test', code='403'))
+        abort(403, message="You don't have access to this project")
 
     return render_template('manage_project.html', form=change_project_property, project=project_object)
 
@@ -320,8 +324,7 @@ def create_issue(project_id):
 
     project_object = session.query(Project).filter(Project.id == id).first()
     if current_user not in project_object.members:
-        return redirect(url_for('access_restricted', from_page='projects', message='Test', code='403'))
-
+        abort(403, message="You don't have access to this project")
 
     create_issue_form = None
 
@@ -348,8 +351,4 @@ def check():
 
 
 if __name__ == '__main__':
-    #    logging.info('Init database session')
-
-    # logging.info(f'Running app on {HOST}:{PORT}, DEBUG_MODE: {DEBUG}')
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port, debug=1)
+    app.run(host=HOST, port=PORT, debug=1)
