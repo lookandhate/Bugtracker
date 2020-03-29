@@ -20,6 +20,7 @@ from data import db_session
 
 from src import Forms
 
+
 ########################################################################################################################
 ############################################# Init PORT, HOST AND ADMIN PANEL OBJECTS ##################################
 ########################################################################################################################
@@ -65,10 +66,12 @@ admin = Admin(app, index_view=MyAdminIndexView(), template_mode='bootstrap3')
 admin.add_view(MyModelView(User, session))
 admin.add_view(MyModelView(Project, session))
 admin.add_view(MyModelView(Issue, session))
+session.close()
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
 DEBUG = True
+
 
 ########################################################################################################################
 ######################################## APP ROUTES BELOW ##############################################################
@@ -91,7 +94,7 @@ def index():
     registered_users = len(session.query(User).all())
     title = 'Index'
     session.close()
-    return render_template('base.html', title=title, registred_users=registered_users)
+    return render_template('index.html', title=title, registred_users=registered_users)
 
 
 # Registration page
@@ -113,8 +116,8 @@ def join():
         # checking if user already registered
         if session.query(User).filter(User.username == form.username.data).all():
             session.close()
+            flash('User with this username already registered', 'alert alert-danger')
             return render_template('join.html',
-                                   message="User already registered",
                                    form=form)
 
         # User object for database
@@ -138,7 +141,7 @@ def join():
         session.commit()
         session.close()
 
-        flash('Your account has been created and now you are able to log in', 'success')
+        flash('Your account has been created and now you are able to log in', 'alert alert-primary')
         return redirect(url_for('index'))
     session.close()
     return render_template('join.html', title=title, form=form, registred_users=registered_users)
@@ -154,20 +157,18 @@ def login():
     registered_users = len(session.query(User).all())
 
     if form.validate_on_submit():
-        session = db_session.create_session()
         user = session.query(User).filter(User.username == form.username.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             user.last_ip = request.remote_addr
+            session.merge(user)
             session.commit()
-            session.close()
+            redirect(url_for('index'))
 
         else:
-            session.close()
+            flash('Wrong username or password', 'alert alert-danger')
             return render_template('login.html',
-                                   message="Неправильный логин или пароль",
                                    form=form)
-    session.close()
     return render_template('login.html', title=title, form=form, registred_users=registered_users)
 
 
@@ -228,9 +229,8 @@ def new_project():
     if creating_project_form.validate_on_submit():
         if session.query(Project).filter(Project.project_name == creating_project_form.project_name.data).all():
             session.close()
-            return render_template('index.html',
-                                   message="Project with that name already created",
-                                   form=creating_project_form)
+            flash('Project with that name already created', 'alert alert-danger')
+            return redirect(url_for('project/new'))
 
         project = Project(project_name=creating_project_form.project_name.data,
                           description=creating_project_form.project_description.data)
@@ -313,20 +313,37 @@ def manage_project(id):
     return render_template('manage_project.html', form=change_project_property, project=project_object)
 
 
-@app.route('/projects/<id>/new_issue')
+@app.route('/projects/<project_id>/new_issue', methods=['GET', 'POST'])
 @login_required
 def create_issue(project_id):
-    # TODO implement creating issue page
+    title = 'New issue'
     # Creating db session
     session = db_session.create_session()
 
     registered_users = len(session.query(User).all())
+    project_object = session.query(Project).filter(Project.id == project_id).first()
 
-    project_object = session.query(Project).filter(Project.id == id).first()
-    if current_user not in project_object.members:
+    # Check does user have access to this project
+    if current_user not in project_object.members and current_user.role != 'Admin':
         abort(403, message="You don't have access to this project")
 
-    create_issue_form = None
+    create_issue_form = Forms.CreateIssue()
+
+    if create_issue_form.validate_on_submit():
+        all_issues = len(project_object.issues)
+        issue = Issue()
+        issue.tracking = f'{project_object.short_project_tag}-{all_issues + 1}'
+        issue.priority = create_issue_form.priority.data
+        issue.state = create_issue_form.state.data
+
+        # Append issue to user and project
+        project_object.issues.append(issue)
+        current_user.issues.append(issue)
+
+        session.merge(issue)
+        session.commit()
+        session.close()
+    return render_template('new_issue.html', title=title, project=project_object, form=create_issue_form)
 
 
 @app.route('/favicon.ico')
