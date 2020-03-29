@@ -29,6 +29,11 @@ association_table_project_to_issue = sqlalchemy.Table('project_to_issue', SqlAlc
                                                       sqlalchemy.Column('project_id', sqlalchemy.Integer,
                                                                         sqlalchemy.ForeignKey('projects.id'))
                                                       )
+association_table_subsystems_to_project = sqlalchemy.Table('subsystems_to_project', SqlAlchemyBase.metadata,
+                                                           sqlalchemy.Column('project_id', sqlalchemy.Integer,
+                                                                             sqlalchemy.ForeignKey('projects.id')),
+                                                           sqlalchemy.Column('subsystem', sqlalchemy.String)
+                                                           )
 
 
 class User(SqlAlchemyBase, UserMixin):
@@ -133,6 +138,15 @@ class Project(SqlAlchemyBase):
 
     def __str__(self):
         return self.__repr__()
+
+    def get_project_subsystems(self):
+        session = create_session()
+        result = session.execute(
+            select[association_table_subsystems_to_project.c.subsystem].where(
+                association_table_subsystems_to_project.c.project_id == self.id
+            )
+        ).fetchall()['subsystem']
+        return result
 
 
 class Issue(SqlAlchemyBase):
