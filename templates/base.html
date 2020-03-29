@@ -31,7 +31,7 @@
         {% if current_user.role == 'Admin' %}
           <a class="navbar-link" href="/admin">Admin Panel</a>
         {% endif %}
-        
+
       {% else %}
         <div class="login-join-link">
           <form action="/login">
@@ -51,6 +51,15 @@
 </header>
 <!-- Begin page content -->
 <main role="main" class="container">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <ul class=flashes>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+  {% endwith %}
     {% block content %}{% endblock %}
 </main>
 <footer>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="project-block">
+  <div class=total-projects"> Projects: {{ user.projects|length }} </div>
+    {% for project in user.projects %}
+      <div class="project-element">
+        <a href="/projects/{{ project.id }}"> {{ project.project_name }}</a>
+        <div class="project-desc">{{ project.description }}</div>
+        <div class="project-desc" align="right">Issues: {{ project.issues|length }}</div>
+      </div>
+    {% endfor %}
+{% endblock %}
