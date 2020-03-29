@@ -351,4 +351,6 @@ def check():
 
 
 if __name__ == '__main__':
+    db_session.global_init("db/bugtracker.sqlite")
+
     app.run(host=HOST, port=PORT, debug=1)

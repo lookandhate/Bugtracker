@@ -1,3 +1,4 @@
 /alembic.ini
 /alembic/
 /ngrok.exe
+/db/bugtracker.sqlite
