@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, MultipleFileField
 from wtforms.validators import DataRequired, Length, EqualTo
 
 
@@ -35,7 +35,12 @@ class CreateProject(FlaskForm):
 
 
 class CreateIssue(FlaskForm):
-    pass
+    summary = StringField('Summary information', validators=[DataRequired(), Length(min=1, max=64)])
+    description = TextAreaField('Description', validators=[DataRequired(), Length(min=1, max=1024)])
+    steps_to_reproduce = TextAreaField('Steps to reproduce', validators=[DataRequired(), Length(min=1, max=512)])
+
+    attachments = MultipleFileField('File that proves issue existing')
+    submit = SubmitField('Create Project!')
 
 
 class ChangeProjectProperties(FlaskForm):
