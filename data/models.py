@@ -134,7 +134,7 @@ class Project(SqlAlchemyBase):
     issues = orm.relation('Issue', secondary=association_table_project_to_issue, backref='project_issues')
 
     def __repr__(self):
-        return f'Project name={self.project_name}; id={self.id}'
+        return f'Project name={self.project_name}; id={self.id}; root={self.get_root()}\ndesc:'
 
     def __str__(self):
         return self.__repr__()
@@ -147,6 +147,22 @@ class Project(SqlAlchemyBase):
             )
         ).fetchall()['subsystem']
         return result
+
+    def get_root(self):
+        """
+
+        :return: Return User object of project root (i.e creator)
+        """
+        session = create_session()
+        member_id = session.execute(
+            select[association_table_user_to_project.c.member_id].where(
+                association_table_user_to_project.c.project_id == self.id
+            ).where(
+                association_table_user_to_project.c.project_role == 'root'
+            )
+        ).fetchone()['member_id']
+        user = session.query(User).filter(User.id == member_id)
+        return user
 
 
 class Issue(SqlAlchemyBase):
