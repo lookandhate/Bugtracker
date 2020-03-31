@@ -59,14 +59,14 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 # Create session for flask-admin
-session = db_session.create_session()
+adm_session = db_session.create_session()
 admin = Admin(app, index_view=MyAdminIndexView(), template_mode='bootstrap3')
 
 # Add all our models to flask-admin
-admin.add_view(MyModelView(User, session))
-admin.add_view(MyModelView(Project, session))
-admin.add_view(MyModelView(Issue, session))
-session.close()
+admin.add_view(MyModelView(User, adm_session))
+admin.add_view(MyModelView(Project, adm_session))
+admin.add_view(MyModelView(Issue, adm_session))
+adm_session.close()
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
@@ -207,7 +207,6 @@ def profile_projects(user_id):
     registered_users = len(session.query(User).all())
 
     user = session.query(User).filter(User.id == user_id).first()
-    print(user.projects)
     return render_template('user_projects.html', user=user)
 
 
@@ -216,6 +215,24 @@ def profile_projects(user_id):
 def profile_issues(user_id):
     # TODO: Implement user Issues
     pass
+
+
+@app.route('/projects/<id>/issues')
+@login_required
+def project_issues(id):
+    session = db_session.create_session()
+    # Get project object
+    project_object = session.query(Project).filter(Project.id == id).first()
+    # Check if project exist
+    if project_object is None:
+        # Project object None -> project doesn't exist
+        # Throw 404
+        abort(404)
+    # Check does user have access to this project
+    if current_user not in project_object.members and current_user.role != 'Admin':
+        # Throw 403
+        abort(403)
+    return render_template('project_issues.html', project=project_object)
 
 
 @app.route('/project/new', methods=['GET', 'POST'])
@@ -230,32 +247,33 @@ def new_project():
         if session.query(Project).filter(Project.project_name == creating_project_form.project_name.data).all():
             session.close()
             flash('Project with that name already created', 'alert alert-danger')
-            return redirect(url_for('project/new'))
+            return redirect('project/new')
 
-        project = Project(project_name=creating_project_form.project_name.data,
-                          description=creating_project_form.project_description.data)
+        project_object = Project(project_name=creating_project_form.project_name.data,
+                                 description=creating_project_form.project_description.data)
 
-        project.members.append(current_user)
+        project_object.members.append(current_user)
 
         # Commiting changes
-        session.merge(project)
+        session.merge(project_object)
         session.commit()
         session.close()
 
         # Re-creating session to update DB state
         session = db_session.create_session()
-        project_id = \
-            session.query(Project.id).filter(Project.project_name == creating_project_form.project_name.data).first()[0]
+        project_object = \
+            session.query(Project).filter(Project.project_name == creating_project_form.project_name.data).first()
 
-        # Updating association table with new user role
+        # Updating association table with new user role and adding priorities
         upd = association_table_user_to_project.update().values(project_role='root').where(
             association_table_user_to_project.c.member_id == current_user.id).where(
-            association_table_user_to_project.c.project_id == project_id)
+            association_table_user_to_project.c.project_id == project_object.id)
+        id = project_object.id
+        project_object.add_project_priorities(id, ('Critical', 'Major', 'Minor', 'Normal'))
         session.execute(upd)
-
         session.commit()
         session.close()
-        return redirect(f'/projects/{project_id}')
+        return redirect(f'/projects/{id}')
 
     session.close()
     return render_template('new_project.html', title=title, form=creating_project_form,
@@ -313,6 +331,53 @@ def manage_project(id):
     return render_template('manage_project.html', form=change_project_property, project=project_object)
 
 
+@app.route('/project/<id>/manage/members')
+@login_required
+def project_members(id):
+    session = db_session.create_session()
+
+    project_object = session.query(Project).filter(Project.id == id).first()
+    if project_object is None:
+        abort(404)
+    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root':
+        abort(403)
+    return render_template('project_members.html', project=project_object)
+
+
+@app.route('/project/<id>/manage/add_member/<username>')
+@login_required
+def add_member_to_project(id, username):
+    session = db_session.create_session()
+    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root':
+        abort(403)
+
+    # Check is user exist
+    user = session.query(User).filter(User.username == username).first()
+    if user is None:
+        # Redirect on members page if user doesn't exist
+        flash(f"User {username} doesn't exist", 'alert alert-danger')
+        return redirect(url_for(f'/project/{id}/manage/members'))
+
+    project_object = session.query(Project).filter(Project.id == id)
+    user.projects.append(Project)
+
+    # Update user project role
+    # Set it to member
+    upd = association_table_user_to_project.update().values(project_role='member').where(
+        association_table_user_to_project.c.member_id == user.id).where(
+        association_table_user_to_project.c.project_id == id)
+    session.execute(upd)
+
+    # Commiting changes
+    session.merge(user)
+    session.commit()
+    session.close()
+
+    # Redirect on project members page with flash notification
+    flash(f'User {username} successfully joined to the project', 'alert alert-success')
+    return redirect(f'/project/{id}/manage/members')
+
+
 @app.route('/projects/<project_id>/new_issue', methods=['GET', 'POST'])
 @login_required
 def create_issue(project_id):
@@ -328,6 +393,9 @@ def create_issue(project_id):
         abort(403, message="You don't have access to this project")
 
     create_issue_form = Forms.CreateIssue()
+    create_issue_form.priority.choices = [(pr[0], pr[0]) for pr in project_object.get_project_priorities()]
+    create_issue_form.state.choices = [(st, st) for st in (
+        'Unresolved', 'Fixed', 'Not bug', 'Cant reproduce', 'In progress', 'Fixed', 'Rejected')]
 
     if create_issue_form.validate_on_submit():
         all_issues = len(project_object.issues)
@@ -335,14 +403,18 @@ def create_issue(project_id):
         issue.tracking = f'{project_object.short_project_tag}-{all_issues + 1}'
         issue.priority = create_issue_form.priority.data
         issue.state = create_issue_form.state.data
-
+        issue.description = create_issue_form.description.data
+        issue.steps_to_reproduce = create_issue_form.steps_to_reproduce.data
         # Append issue to user and project
         project_object.issues.append(issue)
-        current_user.issues.append(issue)
-
+        print(issue.id)
+        issue_id = issue.id
         session.merge(issue)
         session.commit()
-        session.close()
+        session.refresh(issue)
+        print(session.__contains__(issue))
+        issue.assignees.append(current_user)
+
     return render_template('new_issue.html', title=title, project=project_object, form=create_issue_form)
 
 
