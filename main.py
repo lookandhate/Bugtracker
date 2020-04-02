@@ -14,9 +14,13 @@ from flask_login import login_user, login_required, logout_user, current_user
 from flask_admin import Admin, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 
+from flask_restful import Api
+
 # import logging
 from data.models import User, Project, Issue
 from data import db_session
+
+from api import resources
 
 from src import Forms
 
@@ -67,6 +71,14 @@ admin.add_view(MyModelView(User, adm_session))
 admin.add_view(MyModelView(Project, adm_session))
 admin.add_view(MyModelView(Issue, adm_session))
 adm_session.close()
+
+# Init api object
+api = Api(app)
+# Add api resources
+api.add_resource(resources.UserResource, '/api/v0/user/<int:user_id>')
+api.add_resource(resources.ProjectResource, '/api/v0/project/<int:project_id>')
+api.add_resource(resources.UserResourceList, '/api/v0/users')
+api.add_resource(resources.ProjectResourceList, '/api/v0/projects')
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
@@ -196,8 +208,6 @@ def profile(user_id):
 
     # If user doesn't exist, throw error page
     abort(404)
-    # return render_template('error.html', error_code=404, error_message='User has been deleted or wasn`t registered',
-    #                        registred_users=registered_users)
 
 
 @app.route('/profile/<user_id>/projects')
@@ -233,6 +243,19 @@ def project_issues(id):
         # Throw 403
         abort(403)
     return render_template('project_issues.html', project=project_object)
+
+
+@app.route('/issue/<issue_tag>')
+@login_required
+def issue(issue_tag):
+    session = db_session.create_session()
+
+    issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
+    project_obj = issue_object.project_issues[0]
+    if current_user not in project_obj.members:
+        session.close()
+        abort(403)
+    return render_template('issue.html', issue=issue_object)
 
 
 @app.route('/project/new', methods=['GET', 'POST'])
@@ -401,6 +424,7 @@ def create_issue(project_id):
         all_issues = len(project_object.issues)
         issue = Issue()
         issue.tracking = f'{project_object.short_project_tag}-{all_issues + 1}'
+        issue.summary = create_issue_form.summary.data
         issue.priority = create_issue_form.priority.data
         issue.state = create_issue_form.state.data
         issue.description = create_issue_form.description.data
@@ -412,31 +436,11 @@ def create_issue(project_id):
         session.merge(issue)
         session.commit()
         session.refresh(issue)
-        print(session.__contains__(issue))
         issue.assignees.append(current_user)
+        session.commit()
+        return redirect('/')
 
     return render_template('new_issue.html', title=title, project=project_object, form=create_issue_form)
-
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-
-@app.route('/access_restricted/<from_page>/<message>/<code>')
-def access_restricted(from_page, message='You don`t have access to this page', code=403):
-    return render_template('error.html', page=from_page, error_code=code, error_message=message)
-
-
-@app.route('/dev')
-def check():
-    session = db_session.create_session()
-    user = session.query(User).first()
-    print(user.project_role)
-    user.extra_data = 'somehting'
-    print(user.project_role)
-    return redirect('/index')
 
 
 if __name__ == '__main__':
