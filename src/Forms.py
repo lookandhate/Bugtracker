@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, MultipleFileField
-from wtforms.validators import DataRequired, Length, EqualTo
+from wtforms.validators import DataRequired, Length, EqualTo, InputRequired
 
 
 class LoginForm(FlaskForm):
@@ -23,6 +23,9 @@ class ChangeProfileProperties(FlaskForm):
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=1, max=20)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=1, max=20)])
+    confirm = PasswordField('Confirm password',
+                            validators=[InputRequired(), DataRequired(), Length(min=1, max=20),
+                                        EqualTo('password', message='Passwords must match')])
     submit = SubmitField('Join!')
 
 
@@ -38,9 +41,10 @@ class CreateIssue(FlaskForm):
     summary = StringField('Summary information', validators=[DataRequired(), Length(min=1, max=64)])
     description = TextAreaField('Description', validators=[DataRequired(), Length(min=1, max=1024)])
     steps_to_reproduce = TextAreaField('Steps to reproduce', validators=[DataRequired(), Length(min=1, max=512)])
-
+    priority = SelectField('Priority of issue')
+    state = SelectField('Current State')
     attachments = MultipleFileField('File that proves issue existing')
-    submit = SubmitField('Create Project!')
+    submit = SubmitField('Create Issue!')
 
 
 class ChangeProjectProperties(FlaskForm):
