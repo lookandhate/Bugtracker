@@ -5,9 +5,9 @@ import hashlib
 from typing import Iterable
 
 from .db_session import SqlAlchemyBase, create_session
-
 from sqlalchemy import orm, select, insert
 from flask_login import UserMixin
+from sqlalchemy_serializer import SerializerMixin
 
 association_table_user_to_issue = sqlalchemy.Table('user_to_issue', SqlAlchemyBase.metadata,
                                                    sqlalchemy.Column('user_id', sqlalchemy.Integer,
@@ -49,7 +49,7 @@ association_table_priority_to_project = sqlalchemy.Table('priority_to_project', 
                                                          )
 
 
-class User(SqlAlchemyBase, UserMixin):
+class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     """
     Implementation of user table
 
@@ -122,7 +122,7 @@ class User(SqlAlchemyBase, UserMixin):
         return result
 
 
-class Project(SqlAlchemyBase):
+class Project(SqlAlchemyBase, SerializerMixin):
     """
         Implementation of project table
 
@@ -208,7 +208,7 @@ class Project(SqlAlchemyBase):
         return user
 
 
-class Issue(SqlAlchemyBase):
+class Issue(SqlAlchemyBase, SerializerMixin):
     """
 
     To get access specific user issues, try Issue.assignees
@@ -225,6 +225,7 @@ class Issue(SqlAlchemyBase):
     description = sqlalchemy.Column(sqlalchemy.String)
     steps_to_reproduce = sqlalchemy.Column(sqlalchemy.String)
     summary = sqlalchemy.Column(sqlalchemy.String)
+    date_of_creation = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now())
 
     def __repr__(self):
         return f'Issue name={self.tracking}; id={self.id}\ndesc: {self.description}'
