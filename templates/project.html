@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-
+<h1 align="center">{{ project.project_name }}</h1>
 <div class='my-body project-info'>
   <div class="project-element">
     <div class='project'>
@@ -8,7 +8,7 @@
       <div class='project-head2'><a href='/projects/{{ project.id }}/new_issue'>New Issue</a></div>
     </div>
     <div class="project-desc"> {{ project.description }} </div>
-    <div class="project-desc" align="right">Issues: {{ project.issues|length }}</div>
+    <div class="project-desc" align="right"><a href="/projects/{{ project.id }}/issues">Issues</a>: {{ project.issues|length }}</div>
   </div>
 
   {% if current_user.project_role(project.id) == 'root' or 'manager' or current_user.role =='admin' %}
