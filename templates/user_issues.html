@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="issues-block">
+  <div class=total-issues"> Issues: {{ user_obj.issues|length }} </div>
+    {% for issue in user_obj.issues %}
+      <div class="issue-element">
+        <a href="/issue/{{ issue.tracking }}"> {{ issue.summary }} ({{ issue.date_of_creation.strftime('%Y-%m-%d %H:%M') }})</a>
+        <div>
+          <div class="issue-bottom" align="left">Servity: {{ issue.priority }} </div>
+          <div class="issue-bottom" align="center">State: {{ issue.state }} </div>
+          <div class="issue-bottom" align="right"> In {{ issue.project.short_project_tag }} </div>
+        </div>
+      </div>
+    {% endfor %}
+{% endblock %}
