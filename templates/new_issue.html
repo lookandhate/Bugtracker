@@ -24,6 +24,26 @@
     </div>
 
     <div>
+        {{ form.state.label }} <br>
+        {{ form.state(class="form-control") }} <br>
+        {% for error in form.state.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </div>
+
+    <div>
+        {{ form.priority.label }} <br>
+        {{ form.priority(class="form-control") }} <br>
+        {% for error in form.priority.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </div>
+
+    <div>
         {{ form.attachments.label }} <br>
         {{ form.attachments(class="form-control") }} <br>
         {% for error in form.attachments.errors %}
