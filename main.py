@@ -34,7 +34,7 @@ from src import Forms
 class MyModelView(ModelView):
     def is_accessible(self):
         if current_user.is_authenticated:
-            return current_user.role == 'Admin'
+            return current_user.is_admin
         return False
 
     def inaccessible_callback(self, name, **kwargs):
@@ -45,7 +45,7 @@ class MyModelView(ModelView):
 class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
         if current_user.is_authenticated:
-            return current_user.role == 'Admin'
+            return current_user.is_admin
         return False
 
     def inaccessible_callback(self, name, **kwargs):
@@ -175,7 +175,8 @@ def login():
             user.last_ip = request.remote_addr
             session.merge(user)
             session.commit()
-            redirect(url_for('index'))
+            flash('You are logged in', 'alert alert-success')
+            return redirect('/index')
 
         else:
             flash('Wrong username or password', 'alert alert-danger')
@@ -223,7 +224,13 @@ def profile_projects(user_id):
 @app.route('/profile/<user_id>/issues')
 @login_required
 def profile_issues(user_id):
-    # TODO: Implement user Issues
+    session = db_session.create_session()
+    user = session.query(User).filter(User.id == user_id).first()
+    if user is None:
+        session.close()
+        abort(404)
+    if current_user.id == user.id or current_user.is_admin:
+        return render_template('user_issues.html', user_obj=user)
     pass
 
 
@@ -239,7 +246,7 @@ def project_issues(id):
         # Throw 404
         abort(404)
     # Check does user have access to this project
-    if current_user not in project_object.members and current_user.role != 'Admin':
+    if current_user not in project_object.members and not current_user.is_admin:
         # Throw 403
         abort(403)
     return render_template('project_issues.html', project=project_object)
@@ -251,7 +258,7 @@ def issue(issue_tag):
     session = db_session.create_session()
 
     issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
-    project_obj = issue_object.project_issues[0]
+    project_obj = issue_object.project[0]
     if current_user not in project_obj.members:
         session.close()
         abort(403)
@@ -272,8 +279,11 @@ def new_project():
             flash('Project with that name already created', 'alert alert-danger')
             return redirect('project/new')
 
-        project_object = Project(project_name=creating_project_form.project_name.data,
-                                 description=creating_project_form.project_description.data)
+        project_object = Project()
+        project_object.project_name = creating_project_form.project_name.data,
+        project_object.description = creating_project_form.project_description.data
+        project_object.short_project_tag = creating_project_form.short_project_tag.data if\
+            creating_project_form.short_project_tag.data else creating_project_form.project_name.data[:4]
 
         project_object.members.append(current_user)
 
@@ -316,7 +326,7 @@ def project(id):
     # Check does current user have access to this project
     # If don`t, throw error page
 
-    if current_user not in list(project_object.members) and current_user.role != 'Admin':
+    if current_user not in list(project_object.members) and not current_user.is_admin:
         abort(403, message="You don't have access to this project")
 
     # If project exist and user have access to it, then return project page
@@ -348,7 +358,7 @@ def manage_project(id):
     # If don`t, throw error page
     if (current_user.project_role(project_object.id) != 'root' and current_user.project_role(
             project_object.id) != 'manager') \
-            and current_user.role != 'Admin':
+            and not current_user.is_admin:
         abort(403, message="You don't have access to this project")
 
     return render_template('manage_project.html', form=change_project_property, project=project_object)
@@ -412,7 +422,7 @@ def create_issue(project_id):
     project_object = session.query(Project).filter(Project.id == project_id).first()
 
     # Check does user have access to this project
-    if current_user not in project_object.members and current_user.role != 'Admin':
+    if current_user not in project_object.members and not current_user.is_admin:
         abort(403, message="You don't have access to this project")
 
     create_issue_form = Forms.CreateIssue()
@@ -431,7 +441,7 @@ def create_issue(project_id):
         issue.steps_to_reproduce = create_issue_form.steps_to_reproduce.data
         # Append issue to user and project
         project_object.issues.append(issue)
-        print(issue.id)
+
         issue_id = issue.id
         session.merge(issue)
         session.commit()

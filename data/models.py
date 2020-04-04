@@ -121,6 +121,10 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
         return result
 
+    @property
+    def is_admin(self):
+        return self.role == 'Admin'
+
 
 class Project(SqlAlchemyBase, SerializerMixin):
     """
@@ -145,7 +149,7 @@ class Project(SqlAlchemyBase, SerializerMixin):
 
     description = sqlalchemy.Column(sqlalchemy.String(256))
     short_project_tag = sqlalchemy.Column(sqlalchemy.String, unique=True)
-    issues = orm.relation('Issue', secondary=association_table_project_to_issue, backref='project_issues')
+    issues = orm.relation('Issue', secondary=association_table_project_to_issue, backref='project')
 
     def __repr__(self):
         return f'Project name= {self.project_name}; id= {self.id}; root= {self.get_root().username}\ndesc: {self.description}' \
@@ -212,7 +216,7 @@ class Issue(SqlAlchemyBase, SerializerMixin):
     """
 
     To get access specific user issues, try Issue.assignees
-    To get access specific project issues try Issue.project_issues
+    To get access specific project issues try Issue.project
     """
     __tablename__ = 'issues'
 
