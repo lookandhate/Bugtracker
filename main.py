@@ -280,9 +280,9 @@ def new_project():
             return redirect('project/new')
 
         project_object = Project()
-        project_object.project_name = creating_project_form.project_name.data,
+        project_object.project_name = creating_project_form.project_name.data
         project_object.description = creating_project_form.project_description.data
-        project_object.short_project_tag = creating_project_form.short_project_tag.data if\
+        project_object.short_project_tag = creating_project_form.short_project_tag.data if \
             creating_project_form.short_project_tag.data else creating_project_form.project_name.data[:4]
 
         project_object.members.append(current_user)
@@ -359,12 +359,12 @@ def manage_project(id):
     if (current_user.project_role(project_object.id) != 'root' and current_user.project_role(
             project_object.id) != 'manager') \
             and not current_user.is_admin:
-        abort(403, message="You don't have access to this project")
+        abort(403)
 
     return render_template('manage_project.html', form=change_project_property, project=project_object)
 
 
-@app.route('/project/<id>/manage/members')
+@app.route('/projects/<id>/manage/members')
 @login_required
 def project_members(id):
     session = db_session.create_session()
@@ -377,9 +377,20 @@ def project_members(id):
     return render_template('project_members.html', project=project_object)
 
 
-@app.route('/project/<id>/manage/add_member/<username>')
+@app.route('/projects/<id>/manage/add_member/')
 @login_required
-def add_member_to_project(id, username):
+def add_member_to_project(id):
+    """
+
+    :param id: Project id in what we want to add new user
+    :return:
+    """
+    try:
+        username = request.args['username']
+    except KeyError as KE:
+        print(KE)
+        abort(422)
+
     session = db_session.create_session()
     if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root':
         abort(403)
@@ -389,14 +400,14 @@ def add_member_to_project(id, username):
     if user is None:
         # Redirect on members page if user doesn't exist
         flash(f"User {username} doesn't exist", 'alert alert-danger')
-        return redirect(url_for(f'/project/{id}/manage/members'))
+        return redirect(f'/projects/{id}/manage/members')
 
-    project_object = session.query(Project).filter(Project.id == id)
-    user.projects.append(Project)
+    project_object = session.query(Project).filter(Project.id == id).first()
+    user.projects.append(project_object)
 
     # Update user project role
     # Set it to member
-    upd = association_table_user_to_project.update().values(project_role='member').where(
+    upd = association_table_user_to_project.update().values(project_role='developer').where(
         association_table_user_to_project.c.member_id == user.id).where(
         association_table_user_to_project.c.project_id == id)
     session.execute(upd)
@@ -408,7 +419,44 @@ def add_member_to_project(id, username):
 
     # Redirect on project members page with flash notification
     flash(f'User {username} successfully joined to the project', 'alert alert-success')
-    return redirect(f'/project/{id}/manage/members')
+    return redirect(f'/projects/{id}/manage/members')
+
+
+@app.route('/projects/<id>/manage/change_role/', methods=['GET', 'POST'])
+@login_required
+def change_project_role(id):
+    """
+
+    :param id: project id in what we want to make changes
+    :return: None
+    """
+    # Some checks below
+    try:
+        name = request.args['name']
+        role = request.args['role']
+        if (role != 'root') and (role != 'manager') and (role != 'developer'):
+            raise ValueError(f'Excepted root, manager or developer, got: {role}')
+    except KeyError as KE:
+        print(KE)
+        abort(422)
+    except ValueError as VE:
+        print(VE)
+        abort(422)
+
+    # Only root can change role of users
+    session = db_session.create_session()
+    if current_user.project_role(id) != 'root' or not current_user.is_admin:
+        return abort(403)
+
+    # Get new manager-user object
+    user = session.query(User).filter(User.username == name).first()
+    # Making old root manager
+    current_user.change_project_role(id, 'manager')
+    # Making new root
+    user.change_project_role(id, 'root')
+    flash(f'User {user.username} became {user.project_role(id)} of project', 'alert alert-success')
+    session.close()
+    return redirect(f'/projects/{id}/manage')
 
 
 @app.route('/projects/<project_id>/new_issue', methods=['GET', 'POST'])
@@ -439,16 +487,18 @@ def create_issue(project_id):
         issue.state = create_issue_form.state.data
         issue.description = create_issue_form.description.data
         issue.steps_to_reproduce = create_issue_form.steps_to_reproduce.data
+        issue.project_id = project_id
         # Append issue to user and project
         project_object.issues.append(issue)
 
-        issue_id = issue.id
+        issue_tag = issue.tracking
         session.merge(issue)
         session.commit()
         session.refresh(issue)
         issue.assignees.append(current_user)
         session.commit()
-        return redirect('/')
+
+        return redirect('/issue/{}'.format(issue_tag))
 
     return render_template('new_issue.html', title=title, project=project_object, form=create_issue_form)
 

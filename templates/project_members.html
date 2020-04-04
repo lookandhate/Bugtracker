@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 
+<script src="{{ url_for('static', filename='js/page_script.js') }}" charset="utf-8"></script>
+<form>
+  <input id="new_member" type="button" name="" value="Add new member" onclick="get_Username({{ project.id }});" />
+</form>
+
 <div id="wrapper">
   <div id='member-block' class='members-block'>
     <ol>
@@ -11,9 +16,11 @@
               <details>
                   <summary><a href="/profile/{{ member.id }}">{{ member.username }}</a><br>Click to see more</summary>
                   Date of adding user to the project: {{ member.project_date_of_add(project.id) }} <br>
-                  Project role: {{ member.project_date_of_add(project.id) }} <br>
-                  Issues: Work in progress <br>
-              </details>
+                  Project role: {{ member.project_role(project.id) }} <br>
+                  Total issues: {{ member.count_of_issues_total(project.id) }} <br>
+                  {% if current_user.is_admin and member != current_user %}
+                      <a href="/projects/{{ project.id }}/manage/change_role/?name={{ member.username }}&role=root">Make root</a>
+                  {% endif %}
           </div>
         </li>
         {% endif %}

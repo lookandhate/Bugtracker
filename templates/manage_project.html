@@ -1,38 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-{% if message %}
-    <h1> {{ message }} </h1>
-{% endif %}
-
-<h1 class="my-body">Fill this to create new project</h1>
-<form action="" method="post" novalidate>
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.project_name.label }} <br>
-        {{ form.project_name(class="form-control") }} <br>
-        {% for error in form.project_name.errors %}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
-    </div>
-    {% endfor %}
-    </div>
-    <div>
-        {{ form.project_description.label }} <br>
-        {{ form.project_description(class="form-control") }} <br>
-        {% for error in form.project_description.errors %}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
-    </div>
-    {% endfor %}
-    </div>
-    <div>
-      <select class="" name="users">
-        {% for member in form.project_owner %}
-
-      </select>
-
-    <p> {{ form.submit(type="submit", class="btn btn-outline-primary") }}</p>
-
-</form>
-
+<div class="project-info"> <a href="/projects/{{ project.id }}/manage/members">Project Members</a></div>
+<div class="project-info"> <a href="#">Close project</a></div>
 {% endblock %}
