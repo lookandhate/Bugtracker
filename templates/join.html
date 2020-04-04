@@ -22,10 +22,20 @@
         {{ form.password.label }} <br>
         {{ form.password(class="form-control") }} <br>
         {% for error in form.password.errors %}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
-    </div>
-    {% endfor %}
+          <div class="alert alert-danger" role="alert">
+            {{ error }}
+           </div>
+        {% endfor %}
+    </p>
+
+    <p>
+      {{ form.confirm.label }} <br>
+      {{ form.confirm(class="form-control") }} <br>
+      {% for error in form.confirm.errors %}
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+      {% endfor %}
     </p>
 
     <p> {{ form.submit(type="submit", class="btn btn-outline-primary") }}</p>
