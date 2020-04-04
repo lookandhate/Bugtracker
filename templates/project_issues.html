@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<a align="right" href="#">Create new issue(add link)</a>
+<div class="issue-block">
+  {% if project.issues == None %}
+    <div>There are no any issues yet</div>
+  {% endif %}
+  {% for issue in project.issues %}
+    <div class="issue-element">
+      <div class="issue-summary"><a href="/issue/{{ issue.tracking }}">{{ issue.summary }} ({{ issue.date_of_creation.strftime('%Y-%m-%d %H:%M') }})</a></div>
+      <div>
+        <div class="issue-bottom" align="left">Servity: {{ issue.priority }} </div>
+        <div class="issue-bottom" align="center">State: {{ issue.state }} </div>
+        <div class="issue-bottom" align="right"> In {{ issue.project.short_project_tag }} </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
