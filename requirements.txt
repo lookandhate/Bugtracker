@@ -2,5 +2,6 @@ flask
 flask_wtf
 flask_login
 flask_admin
-sqlalchemy
 wtforms
+sqlalchemy
+sqlalchemy_serializer
