@@ -3,16 +3,14 @@ import hashlib
 
 from data.models import association_table_user_to_project
 
-from sqlalchemy import update, delete
 
-from flask import render_template, send_from_directory, flash, url_for, redirect, request, abort
+from flask import render_template, flash, url_for, redirect, request, abort
 from flask import Flask
 
 from flask_login import LoginManager
 from flask_login import login_user, login_required, logout_user, current_user
 
-from flask_admin import Admin, AdminIndexView
-from flask_admin.contrib.sqla import ModelView
+from flask_admin import Admin
 
 from flask_restful import Api
 
@@ -60,6 +58,9 @@ api.add_resource(resources.ProjectResourceList, '/api/v0/projects')
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
 DEBUG = True
+
+# Role of users that can change project properties
+PROJECT_MANAGE_ROLES = ['root', 'manager']
 
 
 ########################################################################################################################
@@ -192,7 +193,6 @@ def profile(user_id):
 @login_required
 def profile_projects(user_id):
     session = db_session.create_session()
-    registered_users = len(session.query(User).all())
 
     user = session.query(User).filter(User.id == user_id).first()
     return render_template('user_projects.html', user=user)
@@ -208,7 +208,6 @@ def profile_issues(user_id):
         abort(404)
     if current_user.id == user.id or current_user.is_admin:
         return render_template('user_issues.html', user_obj=user)
-    pass
 
 
 @app.route('/projects/<id>/issues')
@@ -333,9 +332,7 @@ def manage_project(id):
 
     # Check does current user have access manage to this project
     # If don`t, throw error page
-    if (current_user.project_role(project_object.id) != 'root' and current_user.project_role(
-            project_object.id) != 'manager') \
-            and not current_user.is_admin:
+    if current_user.project_role(project_object.id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
         abort(403)
 
     return render_template('manage_project.html', form=change_project_property, project=project_object)
@@ -349,7 +346,7 @@ def project_members(id):
     project_object = session.query(Project).filter(Project.id == id).first()
     if project_object is None:
         abort(404)
-    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root' and not current_user.is_admin:
+    if current_user.project_role(project_object.id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
         abort(403)
     return render_template('project_members.html', project=project_object)
 
@@ -369,7 +366,7 @@ def add_member_to_project(id):
         abort(422)
 
     session = db_session.create_session()
-    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root' and not current_user.is_admin:
+    if current_user.project_role(id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
         abort(403)
 
     # Check is user exist
@@ -397,6 +394,35 @@ def add_member_to_project(id):
     # Redirect on project members page with flash notification
     flash(f'User {username} successfully joined to the project', 'alert alert-success')
     return redirect(f'/projects/{id}/manage/members')
+
+
+@app.route('/project/<id>/manage/remove_user/')
+@login_required
+def remove_user_from_project(id):
+    # Check passed name arg
+    try:
+        name = request.args['name']
+    except KeyError as KE:
+        abort(422)
+    session = db_session.create_session()
+
+    # Get user object
+    user = session.query(User).filter(User.username == name).first()
+
+    # Get project object
+    project_object = session.query(Project).filter(Project.id == id).first()
+
+    # Check does current user have access
+    if current_user.project_role(project_object.id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
+        abort(403)
+
+    # And remove project from user project list
+    user.projects.remove(project_object)
+    session.merge(user)
+    session.commit()
+
+    flash(f'User {user.username} has been removed from f{project_object.project_name}', 'alert alert-success')
+    return redirect(f'/projects/{project_object.id}/manage/members')
 
 
 @app.route('/projects/<id>/manage/change_role/', methods=['GET', 'POST'])
