@@ -63,7 +63,7 @@
   display: inline;
 }
 
-.project-element, .project-member, .issues-element{
+.project-element, .project-member, .issue-element{
   display: flex;
   flex-direction: column;
 
@@ -76,6 +76,12 @@
 
   margin-bottom: 20px;
 }
+
+.issue-bottom{
+  display: inline-block;
+  margin-right: 25%;
+}
+
 .project-desc{
   font-size: 12px;
   font-family: 'Inter', sans-serif;
@@ -86,6 +92,7 @@
   position: relative;
   bottom: -700px;
 }
+
 
 .test-for-check {
   color: red;
