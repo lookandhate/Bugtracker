@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="issue-block">
+    <div align="right"><a href="/issue/{{ issue.tracking }}/change"> Change issue </a></div>
     <div class="id">{{ issue.tracking }}</div>
     <div class="summary"><h2>Summary: {{ issue.summary }}</h2></div>
     <div class="created_date">Created : {{ issue.date_of_creation }}</div>

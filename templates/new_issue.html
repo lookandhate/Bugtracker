@@ -2,7 +2,7 @@
 {% block content %}
 <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
-    <h2 align="left">New issue in <a href="/projects/{{ project.id }}"><h2>{{ project.project_name }}</h2></a></h2>
+    <h2 align="left">{{ state }} in <a href="/projects/{{ project.id }}"><h2>{{ project.project_name }}</h2></a></h2>
     <div>
         {{ form.summary.label }} <br>
         {{ form.summary(class="form-control") }} <br>

@@ -3,7 +3,6 @@ import hashlib
 
 from data.models import association_table_user_to_project
 
-
 from flask import render_template, flash, url_for, redirect, request, abort
 from flask import Flask
 
@@ -30,6 +29,8 @@ from api import resources
 # Init flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my temp secret key'
+
+from src import errors
 
 db_session.global_init("db/bugtracker.sqlite")
 
@@ -228,19 +229,6 @@ def project_issues(id):
     return render_template('project_issues.html', project=project_object)
 
 
-@app.route('/issue/<issue_tag>')
-@login_required
-def issue(issue_tag):
-    session = db_session.create_session()
-
-    issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
-    project_obj = issue_object.project[0]
-    if current_user not in project_obj.members and not current_user.is_admin:
-        session.close()
-        abort(403)
-    return render_template('issue.html', issue=issue_object)
-
-
 @app.route('/project/new', methods=['GET', 'POST'])
 @login_required
 def new_project():
@@ -301,6 +289,8 @@ def project(id):
 
     # Check does current user have access to this project
     # If don`t, throw error page
+    if project_object is None:
+        abort(404)
 
     if current_user not in list(project_object.members) and not current_user.is_admin:
         abort(403, message="You don't have access to this project")
@@ -362,7 +352,6 @@ def add_member_to_project(id):
     try:
         username = request.args['username']
     except KeyError as KE:
-        print(KE)
         abort(422)
 
     session = db_session.create_session()
@@ -462,6 +451,19 @@ def change_project_role(id):
     return redirect(f'/projects/{id}/manage')
 
 
+@app.route('/issue/<issue_tag>')
+@login_required
+def issue(issue_tag):
+    session = db_session.create_session()
+
+    issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
+    project_obj = issue_object.project[0]  # Using index because .project contain list of projects
+    if current_user not in project_obj.members and not current_user.is_admin:
+        session.close()
+        abort(403)
+    return render_template('issue.html', issue=issue_object)
+
+
 @app.route('/projects/<project_id>/new_issue', methods=['GET', 'POST'])
 @login_required
 def create_issue(project_id):
@@ -501,9 +503,53 @@ def create_issue(project_id):
         issue.assignees.append(current_user)
         session.commit()
 
-        return redirect('/issue/{}'.format(issue_tag))
+        return redirect(f'/issue/{issue_tag}')
 
-    return render_template('new_issue.html', title=title, project=project_object, form=create_issue_form)
+    return render_template('new_issue.html', state='New issue', title=title, project=project_object,
+                           form=create_issue_form)
+
+
+@app.route('/issue/<issue_tag>/change', methods=['GET', 'POST'])
+@login_required
+def change_issue(issue_tag):
+    session = db_session.create_session()
+
+    issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
+    title = f'Change {issue_object.tracking}'
+    # Creating issue form
+    change_issue_form = Forms.CreateIssue()
+    change_issue_form.priority.choices = [(pr[0], pr[0]) for pr in issue_object.project[0].get_project_priorities()]
+    change_issue_form.state.choices = [(st, st) for st in (
+        'Unresolved', 'Fixed', 'Not bug', 'Cant reproduce', 'In progress', 'Fixed', 'Rejected')]
+
+    # Using index because .project contain list of projects
+    if current_user not in issue_object.project[0].members and not current_user.is_admin:
+        session.close()
+        abort(403)
+    if request.method == 'GET':
+        # IMPORTANT: USING GET CONDITION BECAUSE WITHOUT IT DATA FROM DATABASE REWRITES DATA IN FORM
+        # Assign data from database to form fields
+        change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
+        change_issue_form.description.data, change_issue_form.steps_to_reproduce.data = \
+            issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
+            issue_object.steps_to_reproduce
+
+    if change_issue_form.validate_on_submit():
+        session = db_session.create_session()
+        issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
+        if issue_object:
+            print(change_issue_form.description.data)
+            issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
+            issue_object.steps_to_reproduce = change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
+                                              change_issue_form.description.data, change_issue_form.steps_to_reproduce.data
+            session.commit()
+            flash(f'Info about issue {issue_object.tracking} successfully updated', 'alert alert-success')
+            return redirect(f'/issue/{issue_object.tracking}')
+        else:
+            abort(404)
+
+    return render_template('new_issue.html', state='Change issue', title=title, project=issue_object.project[0],
+                           form=change_issue_form)
 
 
 if __name__ == '__main__':
