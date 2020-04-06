@@ -20,37 +20,14 @@ from flask_restful import Api
 from data.models import User, Project, Issue
 from data import db_session
 
-from api import resources
-
 from src import Forms
+from src.model_views import MyAdminIndexView, MyModelView
 
+from api import resources
 
 ########################################################################################################################
 ############################################# Init PORT, HOST AND ADMIN PANEL OBJECTS ##################################
 ########################################################################################################################
-
-
-# MyModelView for admin panel
-class MyModelView(ModelView):
-    def is_accessible(self):
-        if current_user.is_authenticated:
-            return current_user.is_admin
-        return False
-
-    def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('access_restricted', from_page='admin', message='Test', code='403'))
-
-
-# AdminIndexView for admin panel
-class MyAdminIndexView(AdminIndexView):
-    def is_accessible(self):
-        if current_user.is_authenticated:
-            return current_user.is_admin
-        return False
-
-    def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('access_restricted', from_page='admin', message='Test', code='403'))
-
 
 # Init flask app
 app = Flask(__name__)
@@ -259,7 +236,7 @@ def issue(issue_tag):
 
     issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
     project_obj = issue_object.project[0]
-    if current_user not in project_obj.members:
+    if current_user not in project_obj.members and not current_user.is_admin:
         session.close()
         abort(403)
     return render_template('issue.html', issue=issue_object)
@@ -372,7 +349,7 @@ def project_members(id):
     project_object = session.query(Project).filter(Project.id == id).first()
     if project_object is None:
         abort(404)
-    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root':
+    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root' and not current_user.is_admin:
         abort(403)
     return render_template('project_members.html', project=project_object)
 
@@ -392,7 +369,7 @@ def add_member_to_project(id):
         abort(422)
 
     session = db_session.create_session()
-    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root':
+    if current_user.project_role(id) != 'manager' and current_user.project_role(id) != 'root' and not current_user.is_admin:
         abort(403)
 
     # Check is user exist
@@ -445,7 +422,7 @@ def change_project_role(id):
 
     # Only root can change role of users
     session = db_session.create_session()
-    if current_user.project_role(id) != 'root' or not current_user.is_admin:
+    if current_user.project_role(id) != 'root' and not current_user.is_admin:
         return abort(403)
 
     # Get new manager-user object
