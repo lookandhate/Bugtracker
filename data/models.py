@@ -5,7 +5,7 @@ import hashlib
 from typing import Iterable
 
 from .db_session import SqlAlchemyBase, create_session
-from sqlalchemy import orm, select, insert
+from sqlalchemy import orm, select, insert, update
 from flask_login import UserMixin
 from sqlalchemy_serializer import SerializerMixin
 
@@ -107,9 +107,18 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
             select([association_table_user_to_project.c.project_role]).where(
                 association_table_user_to_project.c.member_id == self.id).where(
                 association_table_user_to_project.c.project_id == project_id)
-        ).fetchone()['project_role']
+        ).fetchone()
         session.close()
-        return result
+        return result[0]
+
+    def change_project_role(self, project_id, role):
+        session = create_session()
+        session.execute(association_table_user_to_project.update().where(
+            association_table_user_to_project.c.project_id == project_id).where(
+            association_table_user_to_project.c.member_id == self.id).values(
+            project_role=role))
+        session.merge(self)
+        session.commit()
 
     def project_date_of_add(self, project_id):
         session = create_session()
@@ -120,6 +129,11 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
         ).fetchone()['date_of_add']
 
         return result
+
+    def count_of_issues_total(self, project_id):
+        session = create_session()
+        temp = session.query(Issue).filter(Issue.project_id == project_id).filter(Issue.assignees.contains(self)).all()
+        return len(temp)
 
     @property
     def is_admin(self):
@@ -230,6 +244,8 @@ class Issue(SqlAlchemyBase, SerializerMixin):
     steps_to_reproduce = sqlalchemy.Column(sqlalchemy.String)
     summary = sqlalchemy.Column(sqlalchemy.String)
     date_of_creation = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now())
+
+    project_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('projects.id'))
 
     def __repr__(self):
         return f'Issue name={self.tracking}; id={self.id}\ndesc: {self.description}'
