@@ -10,7 +10,6 @@
   <div id='member-block' class='members-block'>
     <ol>
       {% for member in project.members %}
-        {% if loop.index < 10 %}
           <li>
             <div class='project-member'>
               <details>
@@ -18,12 +17,19 @@
                   Date of adding user to the project: {{ member.project_date_of_add(project.id) }} <br>
                   Project role: {{ member.project_role(project.id) }} <br>
                   Total issues: {{ member.count_of_issues_total(project.id) }} <br>
-                  {% if current_user.is_admin and member != current_user %}
+                  {% if current_user.project_role(project.id) == "root" or current_user.is_admin %}
+                    {% if current_user != member %}
+                      {% if member.project_role(project.id) == "developer" %}
+                        <a href="/projects/{{ project.id }}/manage/change_role/?name={{ member.username }}&role=manager"> Promote to manager</a>
+                      {% elif member.project_role(project.id) == "manager" %}
+                        <a href="/projects/{{ project.id }}/manage/change_role/?name={{ member.username }}&role=developer"> Demote to developer</a>
+                      {% endif %}
                       <a href="/projects/{{ project.id }}/manage/change_role/?name={{ member.username }}&role=root">Make root</a>
+                    {% endif %}
                   {% endif %}
-          </div>
-        </li>
-        {% endif %}
+                      <a href="/project/{{ project.id }}/manage/remove_user/?name={{ member.username }}"> Remove user from project</a>
+            </div>
+          </li>
       {% endfor %}
     </ol>
   </div>
