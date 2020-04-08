@@ -30,8 +30,6 @@ from api import resources
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my temp secret key'
 
-from src import errors
-
 db_session.global_init("db/bugtracker.sqlite")
 
 # Init login manager
@@ -211,12 +209,12 @@ def profile_issues(user_id):
         return render_template('user_issues.html', user_obj=user)
 
 
-@app.route('/projects/<id>/issues')
+@app.route('/projects/<project_id>/issues')
 @login_required
-def project_issues(id):
+def project_issues(project_id):
     session = db_session.create_session()
     # Get project object
-    project_object = session.query(Project).filter(Project.id == id).first()
+    project_object = session.query(Project).filter(Project.id == project_id).first()
     # Check if project exist
     if project_object is None:
         # Project object None -> project doesn't exist
@@ -265,27 +263,27 @@ def new_project():
         upd = association_table_user_to_project.update().values(project_role='root').where(
             association_table_user_to_project.c.member_id == current_user.id).where(
             association_table_user_to_project.c.project_id == project_object.id)
-        id = project_object.id
-        project_object.add_project_priorities(id, ('Critical', 'Major', 'Minor', 'Normal'))
+        project_id = project_object.id
+        project_object.add_project_priorities(project_id, ('Critical', 'Major', 'Minor', 'Normal'))
         session.execute(upd)
         session.commit()
         session.close()
-        return redirect(f'/projects/{id}')
+        return redirect(f'/projects/{project_id}')
 
     session.close()
     return render_template('new_project.html', title=title, form=creating_project_form,
                            registred_users=registered_users)
 
 
-@app.route('/projects/<id>')
+@app.route('/projects/<project_id>')
 @login_required
-def project(id):
+def project(project_id):
     # Creating db session
     session = db_session.create_session()
 
     registered_users = len(session.query(User).all())
 
-    project_object = session.query(Project).filter(Project.id == id).first()
+    project_object = session.query(Project).filter(Project.id == project_id).first()
 
     # Check does current user have access to this project
     # If don`t, throw error page
@@ -296,23 +294,22 @@ def project(id):
         abort(403, message="You don't have access to this project")
 
     # If project exist and user have access to it, then return project page
-    _project = session.query(Project).filter(Project.id == id).first()
-    date_of_creation = _project.created_date
+    date_of_creation = project_object.created_date
     date_of_creation = f'{date_of_creation.day}-{date_of_creation.month}-{date_of_creation.year} at {date_of_creation.hour}:' \
                        f'{date_of_creation.minute}:{date_of_creation.second}'
 
     return render_template('project.html', project=project_object, date_of_creation=date_of_creation)
 
 
-@app.route('/projects/<id>/manage')
+@app.route('/projects/<project_id>/manage')
 @login_required
-def manage_project(id):
+def manage_project(project_id):
     # Creating db session
     session = db_session.create_session()
 
     registered_users = len(session.query(User).all())
 
-    project_object = session.query(Project).filter(Project.id == id).first()
+    project_object = session.query(Project).filter(Project.id == project_id).first()
     change_project_property = Forms.ChangeProjectProperties(
         project_name=project_object.project_name,
         project_description=project_object.description,
@@ -328,12 +325,12 @@ def manage_project(id):
     return render_template('manage_project.html', form=change_project_property, project=project_object)
 
 
-@app.route('/projects/<id>/manage/members')
+@app.route('/projects/<project_id>/manage/members')
 @login_required
-def project_members(id):
+def project_members(project_id):
     session = db_session.create_session()
 
-    project_object = session.query(Project).filter(Project.id == id).first()
+    project_object = session.query(Project).filter(Project.id == project_id).first()
     if project_object is None:
         abort(404)
     if current_user.project_role(project_object.id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
@@ -341,12 +338,12 @@ def project_members(id):
     return render_template('project_members.html', project=project_object)
 
 
-@app.route('/projects/<id>/manage/add_member/')
+@app.route('/projects/<project_id>/manage/add_member/')
 @login_required
-def add_member_to_project(id):
+def add_member_to_project(project_id):
     """
 
-    :param id: Project id in what we want to add new user
+    :param project_id: Project id in what we want to add new user
     :return:
     """
     try:
@@ -355,7 +352,7 @@ def add_member_to_project(id):
         abort(422)
 
     session = db_session.create_session()
-    if current_user.project_role(id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
+    if current_user.project_role(project_id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
         abort(403)
 
     # Check is user exist
@@ -363,16 +360,16 @@ def add_member_to_project(id):
     if user is None:
         # Redirect on members page if user doesn't exist
         flash(f"User {username} doesn't exist", 'alert alert-danger')
-        return redirect(f'/projects/{id}/manage/members')
+        return redirect(f'/projects/{project_id}/manage/members')
 
-    project_object = session.query(Project).filter(Project.id == id).first()
+    project_object = session.query(Project).filter(Project.id == project_id).first()
     user.projects.append(project_object)
 
     # Update user project role
     # Set it to member
     upd = association_table_user_to_project.update().values(project_role='developer').where(
         association_table_user_to_project.c.member_id == user.id).where(
-        association_table_user_to_project.c.project_id == id)
+        association_table_user_to_project.c.project_id == project_id)
     session.execute(upd)
 
     # Commiting changes
@@ -382,12 +379,12 @@ def add_member_to_project(id):
 
     # Redirect on project members page with flash notification
     flash(f'User {username} successfully joined to the project', 'alert alert-success')
-    return redirect(f'/projects/{id}/manage/members')
+    return redirect(f'/projects/{project_id}/manage/members')
 
 
-@app.route('/project/<id>/manage/remove_user/')
+@app.route('/project/<project_id>/manage/remove_user/')
 @login_required
-def remove_user_from_project(id):
+def remove_user_from_project(project_id):
     # Check passed name arg
     try:
         name = request.args['name']
@@ -399,7 +396,7 @@ def remove_user_from_project(id):
     user = session.query(User).filter(User.username == name).first()
 
     # Get project object
-    project_object = session.query(Project).filter(Project.id == id).first()
+    project_object = session.query(Project).filter(Project.id == project_id).first()
 
     # Check does current user have access
     if current_user.project_role(project_object.id) not in PROJECT_MANAGE_ROLES and not current_user.is_admin:
@@ -411,15 +408,15 @@ def remove_user_from_project(id):
     session.commit()
 
     flash(f'User {user.username} has been removed from f{project_object.project_name}', 'alert alert-success')
-    return redirect(f'/projects/{project_object.id}/manage/members')
+    return redirect(f'/projects/{project_id}/manage/members')
 
 
-@app.route('/projects/<id>/manage/change_role/', methods=['GET', 'POST'])
+@app.route('/projects/<project_id>/manage/change_role/', methods=['GET', 'POST'])
 @login_required
-def change_project_role(id):
+def change_project_role(project_id):
     """
 
-    :param id: project id in what we want to make changes
+    :param project_id: project id in what we want to make changes
     :return: None
     """
     # Some checks below
@@ -437,18 +434,18 @@ def change_project_role(id):
 
     # Only root can change role of users
     session = db_session.create_session()
-    if current_user.project_role(id) != 'root' and not current_user.is_admin:
+    if current_user.project_role(project_id) != 'root' and not current_user.is_admin:
         return abort(403)
 
     # Get new manager-user object
     user = session.query(User).filter(User.username == name).first()
     # Making old root manager
-    current_user.change_project_role(id, 'manager')
+    current_user.change_project_role(project_id, 'manager')
     # Making new root
-    user.change_project_role(id, 'root')
-    flash(f'User {user.username} became {user.project_role(id)} of project', 'alert alert-success')
+    user.change_project_role(project_id, 'root')
+    flash(f'User {user.username} became {user.project_role(project_id)} of project', 'alert alert-success')
     session.close()
-    return redirect(f'/projects/{id}/manage')
+    return redirect(f'/projects/{project_id}/manage')
 
 
 @app.route('/issue/<issue_tag>')
@@ -540,8 +537,9 @@ def change_issue(issue_tag):
         if issue_object:
             print(change_issue_form.description.data)
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-            issue_object.steps_to_reproduce = change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
-                                              change_issue_form.description.data, change_issue_form.steps_to_reproduce.data
+            issue_object.steps_to_reproduce = change_issue_form.summary.data, change_issue_form.priority.data,\
+                                              change_issue_form.state.data, change_issue_form.description.data,\
+                                              change_issue_form.steps_to_reproduce.data
             session.commit()
             flash(f'Info about issue {issue_object.tracking} successfully updated', 'alert alert-success')
             return redirect(f'/issue/{issue_object.tracking}')
