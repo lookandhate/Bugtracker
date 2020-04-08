@@ -537,8 +537,8 @@ def change_issue(issue_tag):
         if issue_object:
             print(change_issue_form.description.data)
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-            issue_object.steps_to_reproduce = change_issue_form.summary.data, change_issue_form.priority.data,\
-                                              change_issue_form.state.data, change_issue_form.description.data,\
+            issue_object.steps_to_reproduce = change_issue_form.summary.data, change_issue_form.priority.data, \
+                                              change_issue_form.state.data, change_issue_form.description.data, \
                                               change_issue_form.steps_to_reproduce.data
             session.commit()
             flash(f'Info about issue {issue_object.tracking} successfully updated', 'alert alert-success')
@@ -550,7 +550,10 @@ def change_issue(issue_tag):
                            form=change_issue_form)
 
 
-if __name__ == '__main__':
+def main(host=HOST, port=PORT, debug=1):
     db_session.global_init("db/bugtracker.sqlite")
+    app.run(host=host, port=port, debug=debug)
 
-    app.run(host=HOST, port=PORT, debug=1)
+
+if __name__ == '__main__':
+    main()
