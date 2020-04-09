@@ -5,6 +5,8 @@ import hashlib
 from typing import Iterable
 
 from .db_session import SqlAlchemyBase, create_session
+from src.misc_funcs import generate_api_key
+
 from sqlalchemy import orm, select, insert, update
 from flask_login import UserMixin
 from sqlalchemy_serializer import SerializerMixin
@@ -75,6 +77,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     created_date = sqlalchemy.Column(sqlalchemy.DateTime,
                                      default=datetime.datetime.now)
     role = sqlalchemy.Column(sqlalchemy.String, default='User')
+    API_KEY = sqlalchemy.Column(sqlalchemy.String(24))
 
     issues = orm.relation('Issue',
                           secondary=association_table_user_to_issue,
@@ -134,6 +137,21 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
         session = create_session()
         temp = session.query(Issue).filter(Issue.project_id == project_id).filter(Issue.assignees.contains(self)).all()
         return len(temp)
+
+    def regenerate_API_key(self):
+        session = create_session()
+        new_key = generate_api_key()
+        # Check if there is any user with exact same API key as just generated
+        if new_key not in session.query(User.API_KEY).all():
+            self.API_KEY = new_key
+            session.merge(self)
+            session.commit()
+        else:
+            while new_key in session.query(User.API_KEY).all():
+                new_key = generate_api_key()
+            self.API_KEY = new_key
+            session.merge(self)
+            session.commit()
 
     @property
     def is_admin(self):
