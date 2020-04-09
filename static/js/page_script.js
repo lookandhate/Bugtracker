@@ -7,5 +7,4 @@ function get_Username(project_id) {
     return;
   }
   window.location.href = "/projects/" + project_id + "/manage/add_member/?username=" +  username;
-
 }
