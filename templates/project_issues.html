@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
-<a align="right" href="#">Create new issue(add link)</a>
+<a align="right" href="/projects/{{ project.id }}/new_issue">Create new issue</a>
 <div class="issue-block">
   {% if project.issues == None %}
     <div>There are no any issues yet</div>
   {% endif %}
-  {% for issue in project.issues %}
+  {% for issue in project.issues[::-1] %}
     <div class="issue-element">
       <div class="issue-summary"><a href="/issue/{{ issue.tracking }}">{{ issue.summary }} ({{ issue.date_of_creation.strftime('%Y-%m-%d %H:%M') }})</a></div>
       <div>
