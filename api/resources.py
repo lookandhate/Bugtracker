@@ -63,15 +63,16 @@ class ProjectResource(Resource):
 
     def get(self, project_id):
         abort_if_not_found(Project, project_id)
+        args = self.project_creation_args.parse_args()
         session = create_session()
         # Get user object by given API KEY
         user_object = session.query(User).filter(User.API_KEY ==
-                                                 self.project_creation_args.parse_args(['API_KEY'])).first()
+                                                 args["API_KEY"]).first()
         # If user doesn't exist -> throw 404 with message
         if user_object is None:
-            abort(404, message=f'User with api key {self.project_creation_args.parse_args(["API_KEY"])} not found')
+            abort(404, message=f'User with api key {args["API_KEY"]} not found')
 
-        project = session.query(project_id).get()
+        project = session.query(Project).filter(Project.id == project_id).first()
 
         # Check if user in project_members
         # If not -> throw 403
@@ -96,7 +97,7 @@ class ProjectResource(Resource):
                                                  args['API_KEY']).first()
         # If user doesn't exist -> throw 404 with message
         if user_object is None:
-            abort(404, message=f'User with api key {self.args["API_KEY"]} not found')
+            abort(404, message=f'User with api key {args["API_KEY"]} not found')
 
         project_object = session.query(Project).filter(Project.project_name == args['project_name']).first()
 
@@ -104,8 +105,8 @@ class ProjectResource(Resource):
         if project_object is not None:
             abort(409, message='Project with this project name already exists')
         # Check if project with that project short tag exist
-        if not session.query(Project).filter(Project.short_project_tag == args['short_tag']).first() is None:
-            abort(409, message='Project with this project short-tag already exists')
+        if not session.query(Project).filter(Project.short_project_tag == short_tag).first() is None:
+            abort(409, message=f'Project with this {short_tag} short-tag already exists')
 
         project_object = Project(
             project_name=args['project_name'], description=args['description'],
@@ -124,8 +125,6 @@ class ProjectResource(Resource):
         session.execute(upd)
         session.commit()
         session.close()
-        session.add(project_object)
-        session.commit()
         return jsonify({'success': 'OK',
                         'id': f'{project_id}'})
 

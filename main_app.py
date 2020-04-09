@@ -28,8 +28,11 @@ from api import resources
 
 app = Flask('App')
 app.config['SECRET_KEY'] = 'my temp secret key'
-
-db_session.global_init("db/bugtracker.sqlite")
+app.config['SQLITE3_SETTINGS'] = {
+    'host': 'db/bugtracker.sqlite'
+}
+if not app.testing:
+    db_session.global_init(app.config['SQLITE3_SETTINGS']['host'])
 
 # Init login manager
 login_manager = LoginManager()
@@ -562,7 +565,7 @@ def change_issue(issue_tag):
 
 
 def main(host=HOST, port=PORT, debug=1):
-    db_session.global_init("db/bugtracker.sqlite")
+    db_session.global_init(app.config['SQLITE3_SETTINGS']['host'])
     app.run(host=host, port=port, debug=debug)
 
 
