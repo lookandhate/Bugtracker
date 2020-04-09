@@ -17,17 +17,17 @@ from flask_restful import Api
 from data.models import User, Project, Issue
 from data import db_session
 
-from src import Forms
+from src import forms
 from src.model_views import MyAdminIndexView, MyModelView
 
 from api import resources
+
 
 ########################################################################################################################
 ############################################# Init PORT, HOST AND ADMIN PANEL OBJECTS ##################################
 ########################################################################################################################
 
-# Init flask app
-app = Flask(__name__)
+app = Flask('App')
 app.config['SECRET_KEY'] = 'my temp secret key'
 
 db_session.global_init("db/bugtracker.sqlite")
@@ -95,7 +95,7 @@ def join():
     registered_users = len(session.query(User).all())
 
     # Registration form
-    form = Forms.RegistrationForm()
+    form = forms.RegistrationForm()
 
     # And finally, redirecting to index page
     if form.validate_on_submit():
@@ -140,7 +140,7 @@ def join():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     title = 'Login'
-    form = Forms.LoginForm()
+    form = forms.LoginForm()
 
     session = db_session.create_session()
     registered_users = len(session.query(User).all())
@@ -231,7 +231,7 @@ def project_issues(project_id):
 @login_required
 def new_project():
     title = 'Create project'
-    creating_project_form = Forms.CreateProject()
+    creating_project_form = forms.CreateProject()
     session = db_session.create_session()
     registered_users = len(session.query(User).all())
 
@@ -310,7 +310,7 @@ def manage_project(project_id):
     registered_users = len(session.query(User).all())
 
     project_object = session.query(Project).filter(Project.id == project_id).first()
-    change_project_property = Forms.ChangeProjectProperties(
+    change_project_property = forms.ChangeProjectProperties(
         project_name=project_object.project_name,
         project_description=project_object.description,
     )
@@ -475,7 +475,7 @@ def create_issue(project_id):
     if current_user not in project_object.members and not current_user.is_admin:
         abort(403, message="You don't have access to this project")
 
-    create_issue_form = Forms.CreateIssue()
+    create_issue_form = forms.CreateIssue()
     create_issue_form.priority.choices = [(pr[0], pr[0]) for pr in project_object.get_project_priorities()]
     create_issue_form.state.choices = [(st, st) for st in (
         'Unresolved', 'Fixed', 'Not bug', 'Cant reproduce', 'In progress', 'Fixed', 'Rejected')]
@@ -514,7 +514,7 @@ def change_issue(issue_tag):
     issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
     title = f'Change {issue_object.tracking}'
     # Creating issue form
-    change_issue_form = Forms.CreateIssue()
+    change_issue_form = forms.CreateIssue()
     change_issue_form.priority.choices = [(pr[0], pr[0]) for pr in issue_object.project[0].get_project_priorities()]
     change_issue_form.state.choices = [(st, st) for st in (
         'Unresolved', 'Fixed', 'Not bug', 'Cant reproduce', 'In progress', 'Fixed', 'Rejected')]
