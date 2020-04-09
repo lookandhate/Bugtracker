@@ -7,7 +7,7 @@ from typing import Iterable
 from .db_session import SqlAlchemyBase, create_session
 from src.misc_funcs import generate_api_key
 
-from sqlalchemy import orm, select, insert, update
+from sqlalchemy import orm, select
 from flask_login import UserMixin
 from sqlalchemy_serializer import SerializerMixin
 
@@ -217,11 +217,11 @@ class Project(SqlAlchemyBase, SerializerMixin):
         session.close()
         return result
 
-    def add_project_priorities(self, id: int, priorities: Iterable):
+    def add_project_priorities(self, project_id: int, priorities: Iterable):
         session = create_session()
         for priority in priorities:
             session.execute(association_table_priority_to_project.insert(),
-                            {'project_id': id, 'priority': priority})
+                            {'project_id': project_id, 'priority': priority})
         session.commit()
         session.close()
 
