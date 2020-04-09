@@ -22,7 +22,6 @@ from src.model_views import MyAdminIndexView, MyModelView
 
 from api import resources
 
-
 ########################################################################################################################
 ############################################# Init PORT, HOST AND ADMIN PANEL OBJECTS ##################################
 ########################################################################################################################
@@ -50,7 +49,7 @@ adm_session.close()
 api = Api(app)
 # Add api resources
 api.add_resource(resources.UserResource, '/api/v0/user/<int:user_id>')
-api.add_resource(resources.ProjectResource, '/api/v0/project/<int:project_id>')
+api.add_resource(resources.ProjectResource, '/api/v0/project', '/api/v0/project/<int:project_id>')
 api.add_resource(resources.UserResourceList, '/api/v0/users')
 api.add_resource(resources.ProjectResourceList, '/api/v0/projects')
 
@@ -186,6 +185,18 @@ def profile(user_id):
 
     # If user doesn't exist, throw error page
     abort(404)
+
+
+@app.route('/profile/<user_id>/new_api_key')
+@login_required
+def regenerate_api_key_page(user_id):
+    session = db_session.create_session()
+    user_object = session.query(User).filter(User.id == user_id).first()
+    if current_user != user_object:
+        abort(403)
+    user_object.regenerate_API_key()
+    flash('Your API key changed', 'alert alert-success')
+    return redirect(f'/profile/{user_id}')
 
 
 @app.route('/profile/<user_id>/projects')
