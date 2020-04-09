@@ -20,8 +20,8 @@ def abort_if_not_found(cls, id):
 
 class UserResource(Resource):
     user_parser = reqparse.RequestParser()
-    user_parser.add_argument('username', require=True)
-    user_parser.add_argument('password', require=True)
+    user_parser.add_argument('username', required=True)
+    user_parser.add_argument('password', required=True)
 
     def get(self, user_id):
         abort_if_not_found(User, user_id)
