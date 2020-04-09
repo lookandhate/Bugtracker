@@ -482,7 +482,6 @@ def create_issue(project_id):
     # Creating db session
     session = db_session.create_session()
 
-    registered_users = len(session.query(User).all())
     project_object = session.query(Project).filter(Project.id == project_id).first()
 
     # Check does user have access to this project
