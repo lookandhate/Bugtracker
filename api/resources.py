@@ -1,21 +1,21 @@
 import hashlib
 from flask import jsonify
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import reqparse, abort, Resource
 from data import db_session
 from data.models import *
 
 
-def abort_if_not_found(cls, id):
+def abort_if_not_found(cls, entity_id):
     """
 
     :param cls: Class from data.models that we looking for
-    :param id: id of specific object of the class
+    :param entity_id: id of specific object of the class
     :return: abort if not found
     """
     session = db_session.create_session()
-    class_object = session.query(cls).get(id)
+    class_object = session.query(cls).get(entity_id)
     if not class_object:
-        abort(404, message=f'Instance of {cls} with id = {id} not found')
+        abort(404, message=f'Instance of {cls} with id = {entity_id} not found')
 
 
 class UserResource(Resource):
