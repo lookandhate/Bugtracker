@@ -8,14 +8,14 @@
 </p>
 <ul>Requirements
     <li>Python 3.6+</li>
-    <li>* flask</li>
-    <li>* flask_wtf</li>
-    <li>* flask_login</li>
-    <li>* flask_admin</li>
-    <li>* flask_restful</li>
-    <li>* wtforms</li>
-    <li>* sqlalchemy</li>
-    <li>* sqlalchemy_serializer</li>
+    <li>flask</li>
+    <li>flask_wtf</li>
+    <li>flask_login</li>
+    <li>flask_admin</li>
+    <li>flask_restful</li>
+    <li>wtforms</li>
+    <li>sqlalchemy</li>
+    <li>sqlalchemy_serializer</li>
 </ul>
 <h1>Installation</h1>
 Download repo, then go to the repo folder and type it in console
