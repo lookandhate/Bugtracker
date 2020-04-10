@@ -6,19 +6,20 @@
     <a href="https://travis-ci.org/SadnessPWNZ/Bugtracker-Project"><img alt="Travis CI build status" src="https://travis-ci.org/SadnessPWNZ/Bugtracker-Project.svg?branch=master"></a>
     <img alt="Code quality" src="https://github.com/SadnessPWNZ/Bugtracker-Project/workflows/Python%20application/badge.svg">
 </p>
-# Requirements
-* Python 3.6+
-* flask
-* flask_wtf
-* flask_login
-* flask_admin
-* flask_restful
-* wtforms
-* sqlalchemy
-* sqlalchemy_serializer
-# Installation 
+<ul>Requirements
+    <li>Python 3.6+</li>
+    <li>* flask</li>
+    <li>* flask_wtf</li>
+    <li>* flask_login</li>
+    <li>* flask_admin</li>
+    <li>* flask_restful</li>
+    <li>* wtforms</li>
+    <li>* sqlalchemy</li>
+    <li>* sqlalchemy_serializer</li>
+</ul>
+<h1>Installation</h1>
 Download repo, then go to the repo folder and type it in console
 ```pip install -r requirements.txt```
-# Run app
+<h1>Run app</h1>
 In project folder open console and run this command ``python main_app.py``
 
