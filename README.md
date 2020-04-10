@@ -6,7 +6,8 @@
     <a href="https://travis-ci.org/SadnessPWNZ/Bugtracker-Project"><img alt="Travis CI build status" src="https://travis-ci.org/SadnessPWNZ/Bugtracker-Project.svg?branch=master"></a>
     <img alt="Code quality" src="https://github.com/SadnessPWNZ/Bugtracker-Project/workflows/Python%20application/badge.svg">
 </p>
-<ul>Requirements
+<h1>Requirements</h1>
+<ul>
     <li>Python 3.6+</li>
     <li>flask</li>
     <li>flask_wtf</li>
