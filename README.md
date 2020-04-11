@@ -5,6 +5,7 @@
     <a href="https://app.codacy.com/manual/SadnessPWNZ/Bugtracker-Project/dashboard"><img alt="Code quality" src="https://api.codacy.com/project/badge/Grade/96412126c20b4dea923dc4759ddb877c"></a>
     <a href="https://travis-ci.org/SadnessPWNZ/Bugtracker-Project"><img alt="Travis CI build status" src="https://travis-ci.org/SadnessPWNZ/Bugtracker-Project.svg?branch=master"></a>
     <img alt="Code quality" src="https://github.com/SadnessPWNZ/Bugtracker-Project/workflows/Python%20application/badge.svg">
+    <a href="https://wakatime.com/badge/github/SadnessPWNZ/Bugtracker-Project"><img src="https://wakatime.com/badge/github/SadnessPWNZ/Bugtracker-Project.svg"></a>
 </p>
 
 <h1>Requirements</h1>
