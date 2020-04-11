@@ -78,10 +78,10 @@ logger = logging.getLogger('Flask-APP')
 @login_manager.user_loader
 def load_user(user_id):
     session = db_session.create_session()
-    result = session.query(User).get(user_id)
-    logger.info(f'User {result} loaded ')
+    loaded_user = session.query(User).get(user_id)
+    logger.info(f'User {loaded_user.username} loaded ')
     session.close()
-    return result
+    return loaded_user
 
 
 # Main page of app
@@ -201,7 +201,6 @@ def profile(user_id):
     :return:Profile page rendered using profile.html template if all OK
     """
     session = db_session.create_session()
-    registered_users = len(session.query(User).all())
 
     # Get data that we need
     user = session.query(User).filter(User.id == user_id).first()
@@ -212,8 +211,8 @@ def profile(user_id):
         logger.info(f'User with id={user_id} doesnt exist')
         abort(404)
 
-    return render_template('profile.html', title=f'{user.username}', id=user_id, user=user,
-                           registred_users=registered_users)
+    title = f'{user.username}'
+    return render_template('profile.html', title=title, user=user)
 
     # If user doesn't exist, throw error page
 
@@ -253,8 +252,9 @@ def profile_projects(user_id):
     if user is None:
         # Throw 404
         logger.info(f'User with id={user_id} doesnt exist')
-
-    return render_template('user_projects.html', user=user)
+        abort(404)
+    title = f"{user.username}'s projects"
+    return render_template('user_projects.html', title=title, user=user)
 
 
 @app.route('/profile/<user_id>/issues')
@@ -268,13 +268,19 @@ def profile_issues(user_id):
     """
     session = db_session.create_session()
     user = session.query(User).filter(User.id == user_id).first()
+
+    # Check if user actually exists
     if user is None:
+        # User doesn't exist -> throw 404
         session.close()
         logger.info(f'User with User.id={user_id} doesnt exist')
         abort(404)
     if current_user.id != user.id and not current_user.is_admin:
+        # Current user doesnt have access to other users issues, throw 403
         logger.info(f'User {current_user.username} doesnt have access to {user.username}`s issues')
         abort(403)
+
+    return render_template('user_issues.html', user=user)
 
 
 @app.route('/projects/<project_id>/issues')
@@ -285,12 +291,11 @@ def project_issues(project_id):
     project_object = session.query(Project).filter(Project.id == project_id).first()
     # Check if project exist
     if project_object is None:
-        # Project object None -> project doesn't exist
-        # Throw 404
+        # Project object is None -> project doesn't exist, throw 404
         abort(404)
     # Check does user have access to this project
     if current_user not in project_object.members and not current_user.is_admin:
-        # Throw 403
+        # Current user doesn't have access to this project, throw 403
         abort(403)
     return render_template('project_issues.html', project=project_object)
 
