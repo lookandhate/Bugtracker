@@ -221,8 +221,8 @@ def profile(user_id):
 @login_required
 def regenerate_api_key_page(user_id):
     """
-     Change API key of that user if current_user == user
-     Otherwise throw 403
+    Change API key of that user if current_user == user
+    Otherwise throw 403
     :param user_id: User.id of User who want to change their API key
     :return: redirect on profile page
     """
@@ -734,7 +734,7 @@ def create_issue(project_id):
 
 @app.route('/issue/<issue_tag>/change', methods=['GET', 'POST'])
 @login_required
-def change_issue(issue_tag):
+def change_issue(issue_tag: str):
     """
     Takes issue_tag, checks does user have access to project in which we want to change issue
     If user has -> change issue
@@ -763,7 +763,7 @@ def change_issue(issue_tag):
 
     title = f'Change {issue_object.tracking}'
     # Creating issue form
-    change_issue_form = forms.CreateIssue()
+    change_issue_form: forms.CreateIssue = forms.CreateIssue()
     change_issue_form.priority.choices = [(pr[0], pr[0]) for pr in issue_object.project[0].get_project_priorities()]
     change_issue_form.state.choices = [(st, st) for st in (
         'Unresolved', 'Fixed', 'Not bug', 'Cant reproduce', 'In progress', 'Fixed', 'Rejected')]

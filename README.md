@@ -23,6 +23,7 @@
 
 Download repo, then go to the repo folder and type it in console
 ```pip install -r requirements.txt```
+
 <h1>Run app</h1>
 
 In project folder open console and run this command ``python main_app.py``
