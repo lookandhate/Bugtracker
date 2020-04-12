@@ -3,13 +3,14 @@ import hashlib
 
 from data.models import association_table_user_to_project
 
-from flask import render_template, flash, url_for, redirect, request, abort
+from flask import render_template, flash, url_for, redirect, request, abort, send_from_directory
 from flask import Flask
 
 from flask_login import LoginManager
 from flask_login import login_user, login_required, logout_user, current_user
 
 from flask_admin import Admin
+from flask_admin.contrib.fileadmin import FileAdmin
 
 from flask_restful import Api
 
@@ -19,7 +20,7 @@ from data import db_session
 
 from src import forms
 from src.model_views import MyAdminIndexView, MyModelView
-
+from src.misc_funcs import generate_random_string
 from api import resources
 
 ########################################################################################################################
@@ -27,7 +28,9 @@ from api import resources
 ########################################################################################################################
 
 app = Flask('App')
-app.config['SECRET_KEY'] = 'my temp secret key'
+# Secret key generates randomly using generate_random_string from src.misc_funcs
+app.config['SECRET_KEY'] = generate_random_string(16)
+
 app.config['SQLITE3_SETTINGS'] = {
     'host': 'db/bugtracker.sqlite'
 }
@@ -793,6 +796,14 @@ def change_issue(issue_tag: str):
 
     return render_template('new_issue.html', state='Change issue', title=title, project=issue_object.project[0],
                            form=change_issue_form)
+
+
+@app.route('/app_logs')
+@login_required
+def get_app_logs():
+    if current_user.is_admin:
+        return send_from_directory(app.root_path, 'app.log')
+    return redirect('login.html')
 
 
 def main(host=HOST, port=PORT, debug=1):
