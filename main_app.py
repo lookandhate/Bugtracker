@@ -744,7 +744,7 @@ def create_issue(project_id):
         issue_object.assignees.append(current_user)
         session.commit()
 
-        return redirect(f'/issue_object/{issue_tag}')
+        return redirect(f'/issue/{issue_tag}')
 
     return render_template('new_issue.html', state='New issue_object', title=title, project=project_object,
                            form=create_issue_form)
