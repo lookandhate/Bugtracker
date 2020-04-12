@@ -510,10 +510,7 @@ def add_member_to_project(project_id):
 
     # Update user project role
     # Set it to member
-    upd = association_table_user_to_project.update().values(project_role='developer').where(
-        association_table_user_to_project.c.member_id == user.id).where(
-        association_table_user_to_project.c.project_id == project_id)
-    session.execute(upd)
+    user.change_project_role(project_id, 'developer')
 
     logger.info(f'User {current_user.username} just added {username} to {project_id}')
 
@@ -527,7 +524,7 @@ def add_member_to_project(project_id):
     return redirect(f'/projects/{project_id}/manage/members')
 
 
-@app.route('/project/<project_id>/manage/remove_user/')
+@app.route('/projects/<project_id>/manage/remove_user/')
 @login_required
 def remove_user_from_project(project_id):
     """
