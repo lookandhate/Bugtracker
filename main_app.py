@@ -51,10 +51,10 @@ adm_session.close()
 # Init api object
 api = Api(app)
 # Add api resources
-api.add_resource(resources.UserResource, '/api/v0/user/<int:user_id>')
-api.add_resource(resources.ProjectResource, '/api/v0/project', '/api/v0/project/<int:project_id>')
-api.add_resource(resources.UserResourceList, '/api/v0/users')
-api.add_resource(resources.ProjectResourceList, '/api/v0/projects')
+api.add_resource(resources.UserResource, '/api/v0.5/user/', '/api/v0.5/user')
+api.add_resource(resources.ProjectResource, '/api/v0.5/project/', '/api/v0.5/project')
+api.add_resource(resources.UserResourceList, '/api/v0.5/users/', '/api/v0.5/users')
+api.add_resource(resources.ProjectResourceList, '/api/v0.5/projects/', '/api/v0.5/projects')
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'

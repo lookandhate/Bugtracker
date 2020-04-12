@@ -83,7 +83,7 @@ class UserResource(Resource):
 
         args = self.user_parser.parse_args()
         # Check if we have all necessary data
-        if not ('username' in args.keys() and 'password' in args.keys()):
+        if 'username' not in args.keys() or 'password' not in args.keys():
             abort(400, message='Not enough arguments')
 
         # All data on a place we can go on
@@ -173,7 +173,7 @@ class ProjectResource(Resource):
         session = db_session.create_session()
         args = self.project_request_args.parse_args()
         # Check if project name and project description passed
-        if not ('project_name' in args.keys() and 'description' in args.keys()):
+        if 'project_name' not in args.keys() or 'description' not in args.keys():
             abort(400, message='You did not passe one(or more) of requirement arguments (project_name, description)')
         # Check if short tag in args
         # If not, short tag will be equal first 5 symbols if project name
@@ -242,7 +242,7 @@ class ProjectResourceList(Resource):
             abort(401, message=f'You passed bad API key')
         # Check if requested user is admin
         if not requested_user.is_admin:
-            abort(403,message='Only admin can access this method')
+            abort(403, message='Only admin can access this method')
 
         projects = session.query(Project).all()
         return jsonify({'users': [item.to_dict(
