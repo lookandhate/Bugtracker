@@ -1,5 +1,5 @@
 import pytest
-from main_app import app
+from main_app import app, API_VER
 from data import db_session
 
 
@@ -10,7 +10,7 @@ app.config['SQLITE3_SETTINGS'] = {
 app.testing = True
 testing_app = app.test_client()
 db_session.global_init('db/bugtracker_test.sqlite')
-CURRENT_API_VER = '/api/v0.5.1'
+CURRENT_API_VER = f'/api/v{API_VER}'
 
 
 class TestConnectionToWebSite:

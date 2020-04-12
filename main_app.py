@@ -73,10 +73,11 @@ adm_session.close()
 # Init api object
 api = Api(app)
 # Add api resources
-api.add_resource(resources.UserResource, '/api/v0.5.1/user/', '/api/v0.5.1/user')
-api.add_resource(resources.ProjectResource, '/api/v0.5.1/project/', '/api/v0.5.1/project')
-api.add_resource(resources.UserResourceList, '/api/v0.5.1/users/', '/api/vv0.5.1/users')
-api.add_resource(resources.ProjectResourceList, '/api/v0.5.1/projects/', '/api/v0.5.1/projects')
+API_VER = '0.5.1'
+api.add_resource(resources.UserResource, f'/api/v{API_VER}/user/', f'/api/v{API_VER}/user')
+api.add_resource(resources.ProjectResource, f'/api/v{API_VER}/project/', f'/api/v{API_VER}/project')
+api.add_resource(resources.UserResourceList, f'/api/v{API_VER}/users/', f'/api/v{API_VER}/users')
+api.add_resource(resources.ProjectResourceList, f'/api/v{API_VER}/projects/', f'/api/v{API_VER}/projects')
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
@@ -230,7 +231,7 @@ def profile(user_id):
         abort(404)
 
     title = f'{user.username}'
-    return render_template('profile.html', title=title, user=user)
+    return render_template('profile.html', title=title, user=user, api_ver=API_VER)
 
     # If user doesn't exist, throw error page
 
