@@ -5,7 +5,6 @@ from data.models import association_table_user_to_project
 
 from flask import render_template, flash, url_for, redirect, request, abort, send_from_directory
 from flask import Flask
-from flask.logging import default_handler
 
 from flask_login import LoginManager
 from flask_login import login_user, login_required, logout_user, current_user
