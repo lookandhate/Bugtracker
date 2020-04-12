@@ -31,7 +31,7 @@ class MyModelView(ModelView):
         """
         This method implements politics for inaccessible request to Model views on  /admin page
         """
-        return redirect(url_for('access_restricted'))
+        return redirect(url_for('index'))
 
 
 # AdminIndexView for admin panel
@@ -55,4 +55,4 @@ class MyAdminIndexView(AdminIndexView):
         """
         This method implements politics for inaccessible request to /admin page
         """
-        return redirect(url_for('access_restricted'))
+        return redirect(url_for('index'))
