@@ -5,16 +5,18 @@ from data.models import association_table_user_to_project
 
 from flask import render_template, flash, url_for, redirect, request, abort, send_from_directory
 from flask import Flask
+from flask.logging import default_handler
 
 from flask_login import LoginManager
 from flask_login import login_user, login_required, logout_user, current_user
 
 from flask_admin import Admin
-from flask_admin.contrib.fileadmin import FileAdmin
 
 from flask_restful import Api
 
 import logging
+from logging.config import dictConfig
+
 from data.models import User, Project, Issue
 from data import db_session
 
@@ -26,6 +28,24 @@ from api import resources
 ########################################################################################################################
 ############################################# Init PORT, HOST AND ADMIN PANEL OBJECTS ##################################
 ########################################################################################################################
+# Init logger
+logging.basicConfig(filename='app.log')
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.FileHandler',
+        'filename': 'app.log',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    },
+    'filename': 'app.log'
+})
 
 app = Flask('App')
 # Secret key generates randomly using generate_random_string from src.misc_funcs
@@ -54,10 +74,10 @@ adm_session.close()
 # Init api object
 api = Api(app)
 # Add api resources
-api.add_resource(resources.UserResource, '/api/v0.5.1/user/', '/api/v0.5/user')
-api.add_resource(resources.ProjectResource, '/api/v0.5.1/project/', '/api/v0.5/project')
-api.add_resource(resources.UserResourceList, '/api/v0.5.1/users/', '/api/v0.5/users')
-api.add_resource(resources.ProjectResourceList, '/api/v0.5.1/projects/', '/api/v0.5/projects')
+api.add_resource(resources.UserResource, '/api/v0.5.1/user/', '/api/v0.5.1/user')
+api.add_resource(resources.ProjectResource, '/api/v0.5.1/project/', '/api/v0.5.1/project')
+api.add_resource(resources.UserResourceList, '/api/v0.5.1/users/', '/api/vv0.5.1/users')
+api.add_resource(resources.ProjectResourceList, '/api/v0.5.1/projects/', '/api/v0.5.1/projects')
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
@@ -65,24 +85,20 @@ DEBUG = True
 
 # Role of users that can change project properties
 PROJECT_MANAGE_ROLES = ['root', 'manager']
-
-logging.basicConfig(
-    filename='app.log',
-    format='%(asctime)s %(levelname)s %(name)s %(message)s'
-)
-logger = logging.getLogger('Flask-APP')
+logger = app.logger
 
 
 ########################################################################################################################
 ######################################## APP ROUTES BELOW ##############################################################
 ########################################################################################################################
 
+
 # Loading current user
 @login_manager.user_loader
 def load_user(user_id):
     session = db_session.create_session()
     loaded_user = session.query(User).get(user_id)
-    logger.info(f'User {loaded_user.username} loaded ')
+    logger.debug(f'User {loaded_user.username} loaded ')
     session.close()
     return loaded_user
 
@@ -775,7 +791,7 @@ def change_issue(issue_tag: str):
         # IMPORTANT: USING GET CONDITION BECAUSE WITHOUT IT DATA FROM DATABASE REWRITES DATA IN FORM
         # Assign data from database to form fields
         change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
-            change_issue_form.description.data, change_issue_form.steps_to_reproduce.data = \
+        change_issue_form.description.data, change_issue_form.steps_to_reproduce.data = \
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
             issue_object.steps_to_reproduce
 
@@ -784,8 +800,8 @@ def change_issue(issue_tag: str):
         issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
         if issue_object:
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-                issue_object.steps_to_reproduce = \
-                change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data,\
+            issue_object.steps_to_reproduce = \
+                change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
                 change_issue_form.description.data, change_issue_form.steps_to_reproduce.data
 
             session.commit()
