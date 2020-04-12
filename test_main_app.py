@@ -10,7 +10,7 @@ app.config['SQLITE3_SETTINGS'] = {
 app.testing = True
 testing_app = app.test_client()
 db_session.global_init('db/bugtracker_test.sqlite')
-CURRENT_API_VER = '/api/v0.5'
+CURRENT_API_VER = '/api/v0.5.1'
 
 
 class TestConnectionToWebSite:

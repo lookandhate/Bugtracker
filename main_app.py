@@ -54,10 +54,10 @@ adm_session.close()
 # Init api object
 api = Api(app)
 # Add api resources
-api.add_resource(resources.UserResource, '/api/v0.5/user/', '/api/v0.5/user')
-api.add_resource(resources.ProjectResource, '/api/v0.5/project/', '/api/v0.5/project')
-api.add_resource(resources.UserResourceList, '/api/v0.5/users/', '/api/v0.5/users')
-api.add_resource(resources.ProjectResourceList, '/api/v0.5/projects/', '/api/v0.5/projects')
+api.add_resource(resources.UserResource, '/api/v0.5.1/user/', '/api/v0.5/user')
+api.add_resource(resources.ProjectResource, '/api/v0.5.1/project/', '/api/v0.5/project')
+api.add_resource(resources.UserResourceList, '/api/v0.5.1/users/', '/api/v0.5/users')
+api.add_resource(resources.ProjectResourceList, '/api/v0.5.1/projects/', '/api/v0.5/projects')
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'
@@ -680,13 +680,13 @@ def issue(issue_tag):
 @login_required
 def create_issue(project_id):
     """
-    Takes project_id and creates new issue there if user have access to this project
+    Takes project_id and creates new issue_object there if user have access to this project
     Otherwise throws 403 code
 
-    :param project_id: project id in which we want to create new issue
+    :param project_id: project id in which we want to create new issue_object
     :return: Page rendered using new_issue.html template
     """
-    title = 'New issue'
+    title = 'New issue_object'
     # Creating db session
     session = db_session.create_session()
 
@@ -711,27 +711,27 @@ def create_issue(project_id):
 
     if create_issue_form.validate_on_submit():
         all_issues = len(project_object.issues)
-        issue = Issue()
-        issue.tracking = f'{project_object.short_project_tag}-{all_issues + 1}'
-        issue.summary = create_issue_form.summary.data
-        issue.priority = create_issue_form.priority.data
-        issue.state = create_issue_form.state.data
-        issue.description = create_issue_form.description.data
-        issue.steps_to_reproduce = create_issue_form.steps_to_reproduce.data
-        issue.project_id = project_id
-        # Append issue to user and project
-        project_object.issues.append(issue)
+        issue_object = Issue()
+        issue_object.tracking = f'{project_object.short_project_tag}-{all_issues + 1}'
+        issue_object.summary = create_issue_form.summary.data
+        issue_object.priority = create_issue_form.priority.data
+        issue_object.state = create_issue_form.state.data
+        issue_object.description = create_issue_form.description.data
+        issue_object.steps_to_reproduce = create_issue_form.steps_to_reproduce.data
+        issue_object.project_id = project_id
+        # Append issue_object to user and project
+        project_object.issues.append(issue_object)
 
-        issue_tag = issue.tracking
-        session.merge(issue)
+        issue_tag = issue_object.tracking
+        session.merge(issue_object)
         session.commit()
-        session.refresh(issue)
-        issue.assignees.append(current_user)
+        session.refresh(issue_object)
+        issue_object.assignees.append(current_user)
         session.commit()
 
-        return redirect(f'/issue/{issue_tag}')
+        return redirect(f'/issue_object/{issue_tag}')
 
-    return render_template('new_issue.html', state='New issue', title=title, project=project_object,
+    return render_template('new_issue.html', state='New issue_object', title=title, project=project_object,
                            form=create_issue_form)
 
 
@@ -775,7 +775,7 @@ def change_issue(issue_tag: str):
         # IMPORTANT: USING GET CONDITION BECAUSE WITHOUT IT DATA FROM DATABASE REWRITES DATA IN FORM
         # Assign data from database to form fields
         change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
-        change_issue_form.description.data, change_issue_form.steps_to_reproduce.data = \
+            change_issue_form.description.data, change_issue_form.steps_to_reproduce.data = \
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
             issue_object.steps_to_reproduce
 
@@ -783,11 +783,11 @@ def change_issue(issue_tag: str):
         session = db_session.create_session()
         issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
         if issue_object:
-            print(change_issue_form.description.data)
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-            issue_object.steps_to_reproduce = change_issue_form.summary.data, change_issue_form.priority.data, \
-                                              change_issue_form.state.data, change_issue_form.description.data, \
-                                              change_issue_form.steps_to_reproduce.data
+                issue_object.steps_to_reproduce = \
+                change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data,\
+                change_issue_form.description.data, change_issue_form.steps_to_reproduce.data
+
             session.commit()
             flash(f'Info about issue {issue_object.tracking} successfully updated', 'alert alert-success')
             return redirect(f'/issue/{issue_object.tracking}')
@@ -801,9 +801,15 @@ def change_issue(issue_tag: str):
 @app.route('/app_logs')
 @login_required
 def get_app_logs():
+    """
+    Checks if current user is admin and if he is sends app logs
+    If he isn't -> redirect to index with flash
+    :return:
+    """
     if current_user.is_admin:
         return send_from_directory(app.root_path, 'app.log')
-    return redirect('login.html')
+    flash('Only admin can do that' 'alert alert-danger')
+    return redirect('index')
 
 
 def main(host=HOST, port=PORT, debug=1):

@@ -227,7 +227,6 @@ class Project(SqlAlchemyBase, SerializerMixin):
 
     def get_root(self):
         """
-
         :return: Return User object of project root (i.e creator)
         """
         session = create_session()
@@ -242,6 +241,24 @@ class Project(SqlAlchemyBase, SerializerMixin):
         user = session.query(User).filter(User.id == member_id).first()
         session.close()
         return user
+
+    def root(self):
+        """
+        USE ONLY FOR API
+        :return: Return username of User-project root (i.e creator)
+        """
+        session = create_session()
+        member_id = session.execute(
+            select([association_table_user_to_project.c.member_id]).where(
+                association_table_user_to_project.c.project_id == self.id
+            ).where(
+                association_table_user_to_project.c.project_role == 'root'
+            )
+        ).fetchone()
+        member_id = member_id['member_id']
+        user = session.query(User).filter(User.id == member_id).first()
+        session.close()
+        return user.username
 
 
 class Issue(SqlAlchemyBase, SerializerMixin):

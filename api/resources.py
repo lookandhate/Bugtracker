@@ -165,7 +165,7 @@ class ProjectResource(Resource):
             abort(403, message="You don't have access to this project")
 
         return jsonify({'project': project.to_dict(
-            only=('description', 'short_project_tag', 'project_name')
+            only=('description', 'short_project_tag', 'project_name', 'root')
         )
         })
 
@@ -245,6 +245,7 @@ class ProjectResourceList(Resource):
             abort(403, message='Only admin can access this method')
 
         projects = session.query(Project).all()
-        return jsonify({'users': [item.to_dict(
-            only=('description', 'short_project_tag', 'project_name')) for item in projects]
+        return jsonify({'projects': [item.to_dict(
+            only=('description', 'short_project_tag', 'project_name', 'root')
+        ) for item in projects]
         })
