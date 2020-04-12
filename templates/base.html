@@ -63,30 +63,8 @@
     {% block content %}{% endblock %}
 </main>
 <footer>
-    <div class="debug-info" align="left">
-      <div>
-        Registered users = {{ registred_users }}
-       </div>
-
-       <div>
-         Created projetcs = {{ created_projects if created_projects else None }}
-       </div>
-
-       <div>
-         Issues = {{ total_issues if total_issues else None }}
-       </div>
-
-        <div>
-          {% if current_user.is_authenticated %}
-            Your ID = {{ current_user.id }} <br>
-            You are {{ current_user.role }}
-          {% else %}
-            You are not authenticated
-          {% endif %}
-       </div>
-    </div>
     <a href="https://github.com/SadnessPWNZ/Bugtracker-Project">
-      <div class="open-source-badge" style="align:right;position:absolute;bottom:0;right:50%;"><img src="{{ url_for('static', filename='img/open-source.png') }}"alt="Open source" width=50 height=50></div>
+      <div class="open-source-badge" style="align:right;position:absolute;bottom:0;right:0%;"><img src="{{ url_for('static', filename='img/github_logo.svg') }}"alt="Open source" width=25 height=25></div>
     </a>
 
 
