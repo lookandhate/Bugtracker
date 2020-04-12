@@ -4,7 +4,7 @@ import random
 letters = string.ascii_uppercase
 
 
-def generate_api_key(length: int = 24) -> str:
+def generate_random_string(length: int = 24) -> str:
     # Default len of api key is 24 symbols
     new_api_key = ''
     for _ in range(length):

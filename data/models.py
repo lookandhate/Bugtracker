@@ -5,7 +5,7 @@ import hashlib
 from typing import Iterable
 
 from .db_session import SqlAlchemyBase, create_session
-from src.misc_funcs import generate_api_key
+from src.misc_funcs import generate_random_string
 
 from sqlalchemy import orm, select
 from flask_login import UserMixin
@@ -140,7 +140,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
     def regenerate_API_key(self):
         session = create_session()
-        new_key = generate_api_key()
+        new_key = generate_random_string()
         # Check if there is any user with exact same API key as just generated
         if new_key not in session.query(User.API_KEY).all():
             self.API_KEY = new_key
@@ -148,7 +148,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
             session.commit()
         else:
             while new_key in session.query(User.API_KEY).all():
-                new_key = generate_api_key()
+                new_key = generate_random_string()
             self.API_KEY = new_key
             session.merge(self)
             session.commit()
