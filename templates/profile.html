@@ -20,7 +20,7 @@
 <div class="my-body">
   {% if current_user.id == user.id|int %}
     <a href="/project/new"> Create new project</a>
-    <div>Your API key: {{ current_user.API_KEY }}<br> <a href='/profile/1/new_api_key'>Want to generate new?</a></div>
+    <div>Your API key: {{ current_user.API_KEY }} API version {{ api_ver }}<br> <a href='/profile/1/new_api_key'>Want to generate new?</a></div>
   {% endif %}
 </div>
 
