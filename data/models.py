@@ -2,7 +2,7 @@ import datetime
 import sqlalchemy
 import hashlib
 
-from typing import Iterable
+from typing import Iterable, Optional
 
 from .db_session import SqlAlchemyBase, create_session
 from src.misc_funcs import generate_random_string
@@ -92,18 +92,21 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     def __str__(self):
         return self.__repr__()
 
-    def check_password(self, password):
-        # Here we checking if inputed password hash equal to hash in our database
+    def check_password(self, password: str) -> bool:
+        """
+        Check if hash of given password equal to hash of password in database
+        :param password: String with password
+        :return: True if hashes are equal, otherwise False
+        """
 
-        h = hashlib.new('md5', bytes(password, encoding='utf8'))
-        return h.hexdigest() == self.hashed_password
+        hash_of_given_password = hashlib.new('md5', bytes(password, encoding='utf8'))
+        return hash_of_given_password.hexdigest() == self.hashed_password
 
-    def project_role(self, project_id):
-        '''
-
-        :param project_id: ID of the project from which we want the user role
-        :return: None if user not in that project
-        '''
+    def project_role(self, project_id: int) -> Optional[str]:
+        """
+        :param project_id: Project.id of the Project from which we want the user role
+        :return: String if User in project members and None if user not in that project
+        """
 
         session = create_session()
         result = session.execute(
@@ -114,7 +117,14 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
         session.close()
         return result[0]
 
-    def change_project_role(self, project_id, role):
+    def change_project_role(self, project_id: int, role: str) -> None:
+        """
+        Updates User role in Project
+        :param project_id: Project.id of Project in what we want to update user Role
+        :param role: new user role
+        :return: None
+        """
+
         session = create_session()
         session.execute(association_table_user_to_project.update().where(
             association_table_user_to_project.c.project_id == project_id).where(
@@ -123,7 +133,12 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
         session.merge(self)
         session.commit()
 
-    def project_date_of_add(self, project_id):
+    def project_date_of_add(self, project_id: int) -> datetime.datetime:
+        """
+        :param project_id: Project.id of Project
+        :return: User join time to Project
+        """
+
         session = create_session()
         result = session.execute(
             select([association_table_user_to_project.c.date_of_add]).where(
@@ -133,14 +148,23 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
         return result
 
-    def count_of_issues_total(self, project_id):
+    def count_of_issues_total(self, project_id: int) -> int:
+        """
+
+        :param project_id: Project.id of Project in what we want to count user issues
+        :return: Amount of user assignees in Project
+        """
         session = create_session()
         temp = session.query(Issue).filter(Issue.project_id == project_id).filter(Issue.assignees.contains(self)).all()
         return len(temp)
 
-    def regenerate_API_key(self):
+    def regenerate_API_key(self) -> None:
+        """
+        Regenerates User API key with 24-length string
+        :return: None
+        """
         session = create_session()
-        new_key = generate_random_string()
+        new_key = generate_random_string(24)
         # Check if there is any user with exact same API key as just generated
         if new_key not in session.query(User.API_KEY).all():
             self.API_KEY = new_key
@@ -148,13 +172,13 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
             session.commit()
         else:
             while new_key in session.query(User.API_KEY).all():
-                new_key = generate_random_string()
+                new_key = generate_random_string(24)
             self.API_KEY = new_key
             session.merge(self)
             session.commit()
 
     @property
-    def is_admin(self):
+    def is_admin(self) -> bool:
         return self.role == 'Admin'
 
 
@@ -190,7 +214,11 @@ class Project(SqlAlchemyBase, SerializerMixin):
     def __str__(self):
         return self.__repr__()
 
-    def get_project_subsystems(self):
+    def get_project_subsystems(self) -> Optional[Iterable[str]]:
+        """
+        :return: Either iterable object that contains strings of Project subsystems
+        """
+
         session = create_session()
         result = session.execute(
             select([association_table_subsystems_to_project.c.subsystem]).where(
@@ -200,32 +228,47 @@ class Project(SqlAlchemyBase, SerializerMixin):
         session.close()
         return result
 
-    def add_project_subsystems(self, subsystems: Iterable):
+    def add_project_subsystems(self, subsystems: Iterable[str]) -> None:
+        """
+        Add subsystems to Project
+        :param subsystems: Iterable object that contains subsystems
+        :return: None
+        """
+
         session = create_session()
         for subsystem in subsystems:
             session.execute(association_table_subsystems_to_project.insert().values(self.id, subsystem))
         session.commit()
         session.close()
 
-    def get_project_priorities(self):
+    def get_project_priorities(self) -> Optional[Iterable[str]]:
+        """
+        :return: Iterable object that contains all strings of project priorities
+        """
         session = create_session()
-        result = session.execute(
+        priorities_list = session.execute(
             select([association_table_priority_to_project.c.priority]).where(
                 association_table_priority_to_project.c.project_id == self.id
             )
         ).fetchall()
         session.close()
-        return result
+        return priorities_list
 
-    def add_project_priorities(self, project_id: int, priorities: Iterable):
+    def add_project_priorities(self, priorities: Iterable) -> None:
+        """
+        Add priorities to Project
+        :param priorities: Iterable object that contains Priorities
+        :return: None
+        """
+
         session = create_session()
         for priority in priorities:
             session.execute(association_table_priority_to_project.insert(),
-                            {'project_id': project_id, 'priority': priority})
+                            {'project_id': self.id, 'priority': priority})
         session.commit()
         session.close()
 
-    def get_root(self):
+    def get_root(self) -> Optional[User]:
         """
         :return: Return User object of project root (i.e creator)
         """
@@ -242,28 +285,39 @@ class Project(SqlAlchemyBase, SerializerMixin):
         session.close()
         return user
 
-    def root(self):
+    # API METHODS BLOCK BELOW
+    def subsystems(self) -> Optional[Iterable[str]]:
         """
         USE ONLY FOR API
+        Proxy method for API
+        :return: List of project subsystems or None
+        """
+
+        return self.get_project_subsystems()
+
+    def priorities(self) -> Optional[Iterable[str]]:
+        """
+        USE ONLY FOR API
+        Proxy method for API
+        :return: List of project priorities or None
+        """
+
+        return self.get_project_priorities()
+
+    def root(self) -> Optional[str]:
+        """
+        USE ONLY FOR API
+        Proxy method for API
         :return: Return username of User-project root (i.e creator)
         """
-        session = create_session()
-        member_id = session.execute(
-            select([association_table_user_to_project.c.member_id]).where(
-                association_table_user_to_project.c.project_id == self.id
-            ).where(
-                association_table_user_to_project.c.project_role == 'root'
-            )
-        ).fetchone()
-        member_id = member_id['member_id']
-        user = session.query(User).filter(User.id == member_id).first()
-        session.close()
-        return user.username
+
+        return self.get_root().username if self.get_root() else None
+    # API METHODS BLOCK ABOVE
 
 
 class Issue(SqlAlchemyBase, SerializerMixin):
     """
-
+    Implementation of issues table in database
     To get access specific user issues, try Issue.assignees
     To get access specific project issues try Issue.project
     """
@@ -288,15 +342,15 @@ class Issue(SqlAlchemyBase, SerializerMixin):
     def __str__(self):
         return self.__repr__()
 
-    def get_attachments(self):
+    def get_attachments(self) -> Optional[Iterable[str]]:
         """
         :return: list of attachments path
         """
         session = create_session()
-        result = session.execute(
+        attachments_list = session.execute(
             select([association_table_file_to_issue.c.file_path]).where(
                 association_table_file_to_issue.c.issue_id == self.id
             )
         ).fetchall()['file_path']
         session.close()
-        return result
+        return attachments_list

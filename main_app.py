@@ -365,7 +365,7 @@ def new_project():
             association_table_user_to_project.c.member_id == current_user.id).where(
             association_table_user_to_project.c.project_id == project_object.id)
         project_id = project_object.id
-        project_object.add_project_priorities(project_id, ('Critical', 'Major', 'Minor', 'Normal'))
+        project_object.add_project_priorities(('Critical', 'Major', 'Minor', 'Normal'))
         session.execute(upd)
         session.commit()
 
@@ -809,6 +809,12 @@ def change_issue(issue_tag: str):
 
     return render_template('new_issue.html', state='Change issue', title=title, project=issue_object.project[0],
                            form=change_issue_form)
+
+
+@app.route('/api')
+@login_required
+def api_page():
+    return render_template('api.html', user=current_user)
 
 
 @app.route('/app_logs')
