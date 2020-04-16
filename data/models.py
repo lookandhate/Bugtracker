@@ -357,8 +357,8 @@ class Issue(SqlAlchemyBase, SerializerMixin):
 
     # API METHODS BLOCK BELOW
     def project_name(self):
-        return self.project.project_name
+        return self.project[0].project_name
 
     def assign_on(self):
-        return self.assignees.username
+        return self.assignees[0].username
     # API METHOD ABOVE
