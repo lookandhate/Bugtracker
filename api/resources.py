@@ -1,5 +1,5 @@
 import hashlib
-from flask import jsonify
+from flask import jsonify, current_app as app
 from flask_restful import reqparse, abort, Resource
 from data import db_session
 from data.models import *
@@ -25,6 +25,7 @@ def abort_if_not_found(cls, entity_id):
     session = db_session.create_session()
     class_object = session.query(cls).get(entity_id)
     if not class_object:
+        app.logger.info(f'Instance of {cls} with id = {entity_id} not found')
         abort(404, message=f'Instance of {cls} with id = {entity_id} not found')
 
 
@@ -52,6 +53,7 @@ class UserResource(Resource):
         # Get args and check if user_id been passed
         args = self.user_parser.parse_args()
         if 'user_id' not in args.keys():
+            app.logger.info(f'GET to UserResource, not user_id was not not passed')
             abort(400, message='You did not pass user_id argument')
 
         # Check if user exists
@@ -60,16 +62,19 @@ class UserResource(Resource):
 
         # Check if API_KEY in args
         if 'API_KEY' not in args.keys():
+            app.logger.info(f'GET to UserResource, not API_KEY was not not passed')
             abort(400, message=f'You did not pass API_KEY parameter')
 
         # Requested user here means user that own API key
         requested_user = session.query(User).filter(User.API_KEY == args["API_KEY"]).first()
         # Check if API key is equal "None" or user with this api key doesn't exist
         if args["API_KEY"] == 'None' or requested_user is None:
+            app.logger.info(f'GET to UserResource, bad API KEY been passed')
             abort(401, message=f'You passed bad API key')
 
         # All checks are OK, now we can response to user with info that he requested
         user = session.query(User).get(args['user_id'])
+        app.logger.info(f'GET to UserResource, response with 200 and {user}')
         return jsonify({'user': user.to_dict(
             only=('role', 'username', 'id')
         )})
@@ -84,6 +89,7 @@ class UserResource(Resource):
         args = self.user_parser.parse_args()
         # Check if we have all necessary data
         if 'username' not in args.keys() or 'password' not in args.keys():
+            app.logger.info(f'POST to UserResource, username or password have not been passed')
             abort(400, message='Not enough arguments')
 
         # All data on a place we can go on
@@ -91,6 +97,7 @@ class UserResource(Resource):
         # Check if user with given username already exists
         user = session.query(User).filter(User.username == args['username']).first()
         if user is not None:
+            app.logger.info(f'POST to UserResource, user with {args["username"]} already exists')
             abort(409, message='User with this username already exists')
         # Hashing given password using md5
         hashed_password = hashlib.new('md5', bytes(args['password'], encoding='utf8'))
@@ -114,6 +121,7 @@ class UserResourceList(Resource):
         args = self.user_parser.parse_args()
         # Check if API_KEY in args
         if 'API_KEY' not in args.keys():
+            app.logger.info('GET to UserResourceList, API_KEY have not been passed')
             abort(400, message=f'You did not pass API_KEY parameter')
 
         session = create_session()
@@ -122,9 +130,15 @@ class UserResourceList(Resource):
         requested_user = session.query(User).filter(User.API_KEY == args["API_KEY"]).first()
         # Check if API key is equal "None" or user with this api key doesn't exist
         if args["API_KEY"] == 'None' or requested_user is None:
+            app.logger.info('GET to UserResourceList, passed bad API_KEY')
             abort(401, message=f'You passed bad API key')
 
+        if not requested_user.is_admin:
+            app.logger.info('POST to ProjectResourceList API KEY doesnt belong to ADMIN')
+            abort(403, message='Only admin can access this method')
+
         users = session.query(User).all()
+        app.logger.info(f'GET to UserResourceList, response with 200 and List of users')
         return jsonify({'users': [item.to_dict(
             only=('role', 'username', 'id')) for item in users]
         })
@@ -143,6 +157,7 @@ class ProjectResource(Resource):
 
         # Check if project_if in args
         if 'project_id' not in args.keys():
+            app.logger.info(f'GET to ProjectResource, project_id has not been passed')
             abort(400, message='You did not pass project_id')
 
         # Check if project with given id exists
@@ -155,6 +170,7 @@ class ProjectResource(Resource):
 
         # If requested user doesn't exist -> throw 401 with message
         if args['API_KEY'] == 'None' or requested_user is None:
+            app.logger.info(f'GET to ProjectResource passed bad API_KEY')
             abort(401, message=f'You passed bad API key')
 
         project = session.query(Project).filter(Project.id == args['project_id']).first()
@@ -162,10 +178,12 @@ class ProjectResource(Resource):
         # Check if user in project_members
         # If not -> throw 403
         if requested_user not in project.members:
+            app.logger.info(f'GET to ProjectResource, user with given API KEY doesnt have access to project')
             abort(403, message="You don't have access to this project")
 
         return jsonify({'project': project.to_dict(
-            only=('description', 'short_project_tag', 'project_name', 'root')
+            only=('description', 'short_project_tag', 'project_name', 'root', 'subsystems',
+                  'priorities')
         )
         })
 
@@ -174,6 +192,7 @@ class ProjectResource(Resource):
         args = self.project_request_args.parse_args()
         # Check if project name and project description passed
         if 'project_name' not in args.keys() or 'description' not in args.keys():
+            app.logger.info('POST to ProjectResource project_name or description have not been passed')
             abort(400, message='You did not passe one(or more) of requirement arguments (project_name, description)')
         # Check if short tag in args
         # If not, short tag will be equal first 5 symbols if project name
@@ -189,21 +208,28 @@ class ProjectResource(Resource):
                                                     args['API_KEY']).first()
         # If user doesn't exist -> throw 401 with message
         if requested_user is None or args['API_KEY'] == 'None':
+            app.logger.info('POST to ProjectResource bad API KEY passed')
             abort(401, message=f'You passed bad API key')
 
         project_object = session.query(Project).filter(Project.project_name == args['project_name']).first()
 
         # Check if project with that project name exist
         if project_object is not None:
+            app.logger.info(f'POST to ProjectResource, Project with this {args["project_name"]} '
+                            f'project name already exists')
             abort(409, message='Project with this project name already exists')
+
         # Check if project with that project short tag exist
         if not session.query(Project).filter(Project.short_project_tag == short_tag).first() is None:
+            app.logger.ifno(f'POST to ProjectResource, Project with this {short_tag} short-tag already exists')
             abort(409, message=f'Project with this {short_tag} short-tag already exists')
 
         project_object = Project(
             project_name=args['project_name'], description=args['description'],
             short_project_tag=args['short_tag'])
         project_object.members.append(requested_user)
+        app.logger.info(f'Project {project_object.project_name} created,'
+                        f'project_id {project_object.id}. Root - {requested_user.username}')
 
         # Commiting changes
         session.merge(project_object)
@@ -213,7 +239,7 @@ class ProjectResource(Resource):
             association_table_user_to_project.c.member_id == requested_user.id).where(
             association_table_user_to_project.c.project_id == project_object.id)
         project_id = project_object.id
-        project_object.add_project_priorities(project_id, ('Critical', 'Major', 'Minor', 'Normal'))
+        project_object.add_project_priorities(('Critical', 'Major', 'Minor', 'Normal'))
         session.execute(upd)
         session.commit()
         session.close()
@@ -239,9 +265,11 @@ class ProjectResourceList(Resource):
         requested_user = session.query(User).filter(User.API_KEY == args["API_KEY"]).first()
         # Check if API key is equal "None" or user with this api key doesn't exist
         if args["API_KEY"] == 'None' or requested_user is None:
+            app.logger.info('POST to ProjectResourceList bad API KEY passed')
             abort(401, message=f'You passed bad API key')
         # Check if requested user is admin
         if not requested_user.is_admin:
+            app.logger.info('POST to ProjectResourceList API KEY doesnt belong to ADMIN')
             abort(403, message='Only admin can access this method')
 
         projects = session.query(Project).all()
