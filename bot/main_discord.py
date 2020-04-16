@@ -9,10 +9,8 @@ if __name__ == '__main__':
     from discord.ext import commands
     from typing import Optional
 
-    from data import db_session
-
-    from bot.discord_db_models import *
-
+    from bot.data.discord_db_models import *
+    from bot.data import discord_db_session
     # CONSTANTS
     with open('CONFIG.json') as f:
         CONFIG = json.load(f)
@@ -20,7 +18,7 @@ if __name__ == '__main__':
     HOST, API_VER, BOT_TOKEN = CONFIG['server'], CONFIG['api_ver'], CONFIG['bot_token']
     client = commands.Bot(command_prefix='?')
     logging.basicConfig(filename='bot.log')
-    discrod_db_session.global_init(f'users.sqlite3')
+    discord_db_session.global_init(r'db\users.sqlite3')
 
 
     @client.event
@@ -28,16 +26,9 @@ if __name__ == '__main__':
         logging.debug(f'BOT log on on {client.user.name}')
         print('im ready')
 
-
-    @client.command()
-    async def help(ctx):
-        # TODO HELP
-        await ctx.channel.send('#TODO HELP')
-
-
     @client.command()
     async def set_up_api_key(ctx, api_key):
-        session = db_session.create_session()
+        session = discord_db_session.create_session()
         # Check if current user already in database
         user: Optional[DiscordUser] = session.query(DiscordUser).filter(DiscordUser.discord_id == ctx.author.id).first()
         if user is None:
@@ -56,7 +47,7 @@ if __name__ == '__main__':
 
     @client.command()
     async def my_api_key(ctx):
-        session = db_session.create_session()
+        session = discord_db_session.create_session()
         logging.info(f'GET API key from {ctx.author}')
         user: Optional[DiscordUser] = session.query(DiscordUser).filter(DiscordUser.discord_id == ctx.author.id).first()
 
@@ -76,7 +67,7 @@ if __name__ == '__main__':
     @client.command()
     async def get_all_projects(ctx):
         # GET API key of user who requested
-        session = db_session.create_session()
+        session = discord_db_session.create_session()
         api_key = session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == ctx.author.id).first()[0]
 
         async with aiohttp.ClientSession() as session:
@@ -94,7 +85,7 @@ if __name__ == '__main__':
     @client.command()
     async def get_all_users(ctx):
         # GET API key of user who requested
-        session = db_session.create_session()
+        session = discord_db_session.create_session()
         api_key = session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == ctx.author.id).first()[0]
 
         async with aiohttp.ClientSession() as session:
@@ -112,7 +103,7 @@ if __name__ == '__main__':
     @client.command()
     async def get_user(ctx, user_id):
         # GET API key of user who requested
-        session = db_session.create_session()
+        session = discord_db_session.create_session()
         api_key = session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == ctx.author.id).first()[0]
 
         async with aiohttp.ClientSession() as session:
@@ -130,7 +121,7 @@ if __name__ == '__main__':
     @client.command()
     async def get_project(ctx, project_id):
         # GET API key of user who requested
-        session = db_session.create_session()
+        session = discord_db_session.create_session()
         api_key = session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == ctx.author.id).first()[0]
 
         async with aiohttp.ClientSession() as session:
@@ -144,5 +135,38 @@ if __name__ == '__main__':
                     await ctx.channel.send(f'```{await r.json()}```')
                     logging.info(f'get_user - OK')
 
+    @client.command()
+    async def get_issue(ctx, issue_tag):
+        # GET API key of user who requested
+        session = discord_db_session.create_session()
+        api_key = session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == ctx.author.id).first()[0]
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(F'http://{HOST}/api/v{API_VER}/issue/{issue_tag}') as r:
+                if r.status != 200:
+                    await ctx.channel.send(f'Got code {r.status}')
+                    response = await r.json()
+                    await ctx.chanel.send(f'Response message  ``{response["message"]}``')
+                    logging.info(f'API key = {api_key}, status {r.status}, message {response["message"]}')
+                else:
+                    await ctx.channel.send(f'```{await r.json()}```')
+                    logging.info(f'get_issue - OK')
+
+    @client.command()
+    async def get_all_issues(ctx):
+        # GET API key of user who requested
+        session = discord_db_session.create_session()
+        api_key = session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == ctx.author.id).first()[0]
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'http://{HOST}/api/v{API_VER}/issues?API_KEY={api_key}') as r:
+                if r.status != 200:
+                    await ctx.channel.send(f'Got code {r.status}')
+                    response = await r.json()
+                    await ctx.chanel.send(f'Response message ``{response["message"]}``')
+                    logging.info(f'API key = {api_key}, status {r.status}, message {response["message"]}')
+                else:
+                    await ctx.channel.send(f'```{await r.json()}```')
+                    logging.info(f'get_all_issues - OK')
 
     client.run(BOT_TOKEN)

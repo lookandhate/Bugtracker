@@ -2,10 +2,9 @@
 Implementation of discord database
 """
 
-import datetime
 import sqlalchemy
-from bot import discrod_db_session
-from data.db_session import SqlAlchemyBase
+from bot.data import discord_db_session
+from bot.data.discord_db_session  import SqlAlchemyBase
 
 
 class DiscordUser(SqlAlchemyBase):
@@ -18,7 +17,7 @@ class DiscordUser(SqlAlchemyBase):
     site_api_key = sqlalchemy.Column(sqlalchemy.String)
 
     def update_api_key(self, discord_id, new_api_key):
-        session = discrod_db_session.create_session()
+        session = discord_db_session.create_session()
         # Get the user object
         user = session.query(DiscordUser).filter(DiscordUser.discord_id == discord_id).first()
         user.site_api_key = new_api_key
@@ -26,5 +25,5 @@ class DiscordUser(SqlAlchemyBase):
         session.commit()
 
     def get_api_key(self, discord_id):
-        session = discrod_db_session.create_session()
+        session = discord_db_session.create_session()
         return session.query(DiscordUser.site_api_key).filter(DiscordUser.discord_id == discord_id).firsr()
