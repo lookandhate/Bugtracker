@@ -73,11 +73,13 @@ adm_session.close()
 # Init api object
 api = Api(app)
 # Add api resources
-API_VER = '0.5.1'
+API_VER = '0.8.0'
 api.add_resource(resources.UserResource, f'/api/v{API_VER}/user/', f'/api/v{API_VER}/user')
 api.add_resource(resources.ProjectResource, f'/api/v{API_VER}/project/', f'/api/v{API_VER}/project')
 api.add_resource(resources.UserResourceList, f'/api/v{API_VER}/users/', f'/api/v{API_VER}/users')
 api.add_resource(resources.ProjectResourceList, f'/api/v{API_VER}/projects/', f'/api/v{API_VER}/projects')
+api.add_resource(resources.IssueResource, f'/api/v{API_VER}/issue/', f'/api/v{API_VER}/issue')
+api.add_resource(resources.IssueResourceList, f'/api/v{API_VER}/issues/', f'/api/v{API_VER}/issues')
 
 # Port, IP address and debug mode
 PORT, HOST = int(os.environ.get("PORT", 8080)), '0.0.0.0'

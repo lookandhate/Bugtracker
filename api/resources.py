@@ -298,7 +298,7 @@ class IssueResource(Resource):
     """
     issue_parser = reqparse.RequestParser()
     issue_parser.add_argument('API_KEY', required=True)
-    issue_parser.add_argument('tag', reuired=False)
+    issue_parser.add_argument('tag', required=False)
 
     issue_parser.add_argument('project_id', required=False)
     issue_parser.add_argument('summary', required=False)
@@ -323,10 +323,13 @@ class IssueResource(Resource):
             app.logger.info(f'GET to IssueResource, tag has not been passed')
             abort(400, message='You did not pass the tag')
 
-        # Check if Issue with given tag exists
-        abort_if_not_found(Issue, args['tag'])
-
         session = create_session()
+        # Check if Issue with given tag exists
+        issue_object: Optional[Issue] = session.query(Issue).filter(Issue.tracking == args['tag']).first()
+        if issue_object is None:
+            app.logger.warning(f'GET IssueResource, Issue with tag{args["tag"]} doesnt exist')
+            abort(404, message=f'Issue with tag{args["tag"]} doesnt exist')
+
         # Requested user here means user that own API key
         requested_user: Optional[User] = session.query(User).filter(User.API_KEY ==
                                                                     args["API_KEY"]).first()
@@ -336,9 +339,8 @@ class IssueResource(Resource):
             app.logger.info(f'GET to IssueResource passed bad API_KEY')
             abort(401, message=f'You passed bad API key')
 
-        issue_object: Optional[Issue] = session.query(Issue).filter(Issue.tracking == args['tag']).first()
         # Check if user has access to the Issue
-        if requested_user not in Issue.project.members and not requested_user.is_Admin:
+        if requested_user not in issue_object.project[0].members and not requested_user.is_admin:
             app.logger.info(f'GET to IssueResource, user with given API KEY doesnt have access to project')
             abort(403, message="You don't have access to this project")
 
@@ -429,24 +431,24 @@ class IssueResourceList(Resource):
 
         args = self.issues_list_parser.parse_args()
         session = db_session.create_session()
-        app.logging.info(f'GET IssueResourceList with args{args}')
+        app.logger.info(f'GET IssueResourceList with args{args}')
         # Check if user exists
         requested_user: Optional[User] = session.query(User).filter(User.API_KEY == args['API_KEY']).first()
         if requested_user is None or args['API_KEY'] == 'None':
-            app.logging.info(f'GET IssueResourceList User with API key {args["API_KEY"]} doesnt exist, return 400')
+            app.logger.info(f'GET IssueResourceList User with API key {args["API_KEY"]} doesnt exist, return 400')
             abort(400)
         # If project_id has not been passed that's mean API should return all issues
-        if 'project_id' not in args.keys():
+        if args['project_id'] is None:
             # But list with all issues can access ONLY site admin
             # Check if requested user is admin
             if not requested_user.is_admin:
-                app.logging.info(f'GET IssueResourceList without project_id,'
-                                 f' {requested_user.username} not an ADMIN, abort with 403')
+                app.logger.info(f'GET IssueResourceList without project_id,'
+                                f'{requested_user.username} not an ADMIN, abort with 403')
                 abort(403, message='Only admin can access to list of all Issues')
 
             issues = session.query(Issue).all()
-            app.logging.info(f'GET IssueResourceList User({requested_user.username})'
-                             f' is admin, return list with all issues')
+            app.logger.info(f'GET IssueResourceList User({requested_user.username})'
+                            f' is admin, return list with all issues')
 
             return jsonify({'issues': [item.to_dict(
                 only=('tracking', 'priority', 'state', 'description', 'steps_to_reproduce', 'summary', 'project_name',
@@ -456,17 +458,17 @@ class IssueResourceList(Resource):
 
         else:
             # Check if project exists
-            app.logging.info(f'GET IssueResourceList checking if project exists ')
+            app.logger.info(f'GET IssueResourceList checking if project exists ')
             abort_if_not_found(Project, args['project_id'])
             project_object: Project = session.query(Project).filter(Project.id == args["project_id"])
-            app.logging.info('Project exists, check if requested user has access to it')
+            app.logger.info('Project exists, check if requested user has access to it')
 
             # Check if requested user has access to project
             if not requested_user.is_admin or requested_user not in project_object.members:
-                app.logging.info(f'GET IssueResourceList, {requested_user}'
-                                 f' is admin={requested_user.is_admin},'
-                                 f' has access to project={requested_user in project_object.members}')
-            app.logging.info(f'Response to {requested_user.username} with the list of Issues')
+                app.logger.info(f'GET IssueResourceList, {requested_user}'
+                                f' is admin={requested_user.is_admin},'
+                                f' has access to project={requested_user in project_object.members}')
+            app.logger.info(f'Response to {requested_user.username} with the list of Issues')
             # GET all project issues
             issues = project_object.issues
             # And, return list in response
