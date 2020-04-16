@@ -816,7 +816,7 @@ def change_issue(issue_tag: str):
 @app.route('/api')
 @login_required
 def api_page():
-    return render_template('api.html', user=current_user)
+    return render_template('api.html', api_ver=API_VER, user=current_user)
 
 
 @app.route('/app_logs')

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<p>Current API version: {{ api_ver }} <br>Your api key: {{ user.API_KEY }}</p>
+<h1>API documentation<h1>
+
+<h2>User</h2>
+<div class="user-api">
+    <h3>GET</h3>
+    <p>To get information about user you need to send GET request in format like this<br> <code>/api/v0.x.x/user/?API_KEY=your_api_key&user_id=your_user_id </code>
+      <br>API_KEY and user_id are necessary
+      <br>And you will get code 200 with info about user(role, username, id)
+      <br>You will get 404 if User doesn't exist or 401 if API key incorrect
+    </p>
+    <h3>POST</h3>
+    <p>You,also can creare user object using API, on POST query you dont need to pass API_KEY, but you have to pass username and password
+    Format <code>/api/v0.x.x/user/?username=username_you_want&password=password_to_account</code></p>
+</div>
+<h2>Project</h2>
+<div class="project-api">
+    <h3>GET</h3>
+    <p>To get information about project you need to send GET request in format like this <br> <code>/api/v0.x.x/project/?API_KEY=your_api_key&project=your_project_id </code>
+      <br>API_KEY and project_id are necessary
+      <br>And you will get code 200 with info about project(project_name, short_project_tag, id, 'priorities', 'subsystems', 'root', 'description')
+      <br>You will get 400 if you didnt pass API key, 404 if Project doesn't exist, 401 if API key incorrect, 403 if you don't have access to project
+    </p>
+
+    <h3>POST</h3>
+    <p>You can create project using API POST method<br>
+    Format: <code>/api/v0.x.x/user/?project_name=project_name_you_want&description=description_you_want&short_tag=short_tag_you_want(not necessary)</code></p>
+</div>
+
+<h2>Issue</h2>
+<div class="issue-api">
+    <h3>GET</h3>
+    <p>To get information about issue you need to send GET request in format like this <br> <code>/api/v0.x.x/issue/?API_KEY=your_api_key&tag=issue_tag </code>
+      <br>API_KEY and tag are necessary
+      <br>And you will get code 200 with info about project('tracking', 'priority', 'state', 'description', 'steps_to_reproduce', 'summary', 'project_name',
+                  'assign_on')
+      <br>You will get 400 if you didnt pass API key, 404 if Project doesn't exist, 401 if API key incorrect, 403 if you don't have access to project
+    </p>
+
+    <h3>POST</h3>
+    <p>You can create Issue using API POST method<br>
+    Format: <code>/api/v0.x.x/issue/?project_id=id_of_project&summary=base_info_about_issue&steps_to_reproduce=steps_to_reproduce_issue&description=issue_description&state=state_of_issue&priority=issue_priority</code></p>
+</div>
+
+{% endblock %}
