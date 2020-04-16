@@ -20,7 +20,7 @@ if __name__ == '__main__':
     HOST, API_VER, BOT_TOKEN = CONFIG['server'], CONFIG['api_ver'], CONFIG['bot_token']
     client = commands.Bot(command_prefix='?')
     logging.basicConfig(filename='bot.log')
-    db_session.global_init(f'users.sqlite3')
+    discrod_db_session.global_init(f'users.sqlite3')
 
 
     @client.event
