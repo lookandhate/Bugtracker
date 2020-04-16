@@ -4,7 +4,7 @@ Implementation of discord database
 
 import datetime
 import sqlalchemy
-from data import db_session
+from bot import db_session
 from data.db_session import SqlAlchemyBase
 
 
