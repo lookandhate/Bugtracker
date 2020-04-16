@@ -354,3 +354,11 @@ class Issue(SqlAlchemyBase, SerializerMixin):
         ).fetchall()['file_path']
         session.close()
         return attachments_list
+
+    # API METHODS BLOCK BELOW
+    def project_name(self):
+        return self.project.project_name
+
+    def assign_on(self):
+        return self.assignees.username
+    # API METHOD ABOVE
