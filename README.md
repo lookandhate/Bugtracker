@@ -20,6 +20,11 @@
     <li>sqlalchemy</li>
     <li>sqlalchemy_serializer</li>
 </ul>
+<h1>Requirements for discord bot</h1>
+<ul>
+    <li>discord.py</li>
+</ul>
+
 <h1>Installation</h1>
 
 Download repo, then go to the repo folder and type it in console
