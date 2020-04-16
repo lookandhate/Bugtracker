@@ -11,14 +11,13 @@ if __name__ == '__main__':
 
     from data import db_session
 
-    from bot.db_models import *
+    from bot.discord_db_models import *
 
     # CONSTANTS
-    TOKEN = 'NjMzMjU1MTg1MTE1Nzc0OTc2.XaiYGA.eo26dYGnwdDNKio4Op1kqR7BQvE'
-    with open('SITE_PREFERENS.json') as f:
-        SITE = json.load(f)
+    with open('CONFIG.json') as f:
+        CONFIG = json.load(f)
 
-    HOST, API_VER = SITE['server'], SITE['api_ver']
+    HOST, API_VER, BOT_TOKEN = CONFIG['server'], CONFIG['api_ver'], CONFIG['bot_token']
     client = commands.Bot(command_prefix='?')
     logging.basicConfig(filename='bot.log')
     db_session.global_init(f'users.sqlite3')
@@ -28,6 +27,12 @@ if __name__ == '__main__':
     async def on_ready():
         logging.debug(f'BOT log on on {client.user.name}')
         print('im ready')
+
+
+    @client.command()
+    async def help(ctx):
+        # TODO HELP
+        await ctx.channel.send('#TODO HELP')
 
 
     @client.command()
@@ -140,4 +145,4 @@ if __name__ == '__main__':
                     logging.info(f'get_user - OK')
 
 
-    client.run(TOKEN)
+    client.run(BOT_TOKEN)

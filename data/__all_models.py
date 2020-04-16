@@ -1,2 +1,2 @@
 from . import models
-from bot.db_models import *
+from bot.discord_db_models import *

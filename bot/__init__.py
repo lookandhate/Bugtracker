@@ -1,2 +1,2 @@
 from .main_discord import *
-from .db_models import *
+from .discord_db_models import *
