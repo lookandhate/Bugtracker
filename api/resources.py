@@ -185,7 +185,7 @@ class ProjectResource(Resource):
             abort(403, message="You don't have access to this project")
 
         return jsonify({'project': project.to_dict(
-            only=('description', 'short_project_tag', 'project_name', 'root', 'subsystems',
+            only=('description', 'short_project_tag', 'id', 'project_name', 'root', 'subsystems',
                   'priorities')
         )
         })

@@ -839,4 +839,4 @@ def main(host=HOST, port=PORT, debug=1):
 
 
 if __name__ == '__main__':
-    main()
+    main(debug=False)
