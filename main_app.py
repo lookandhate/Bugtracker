@@ -58,7 +58,7 @@ app.config['SQLITE3_SETTINGS'] = {
 }
 
 # This for pythonwanywhere.com
-if __name__ != '__main__' and not app.testing:
+if __name__ != '__main__' and not app.testing and os.path.exists('/home/Sadn3ss'):
     app.root_path = os.path.dirname(os.path.abspath(__file__))
     if sys.platform != 'win32':
         app.config['SQLITE3_SETTINGS'] = {
