@@ -43,7 +43,7 @@ class CreateIssue(FlaskForm):
     steps_to_reproduce = TextAreaField('Steps to reproduce', validators=[DataRequired(), Length(min=1, max=512)])
     priority = SelectField('Priority of issue')
     state = SelectField('Current State')
-    attachments = MultipleFileField('File that proves issue existing')
+    attachments = TextAreaField('Link on cloud with files')
     submit = SubmitField('Create Issue!')
 
 

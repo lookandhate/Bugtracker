@@ -1,5 +1,6 @@
 import os
 import hashlib
+import sys
 
 from data.models import association_table_user_to_project
 
@@ -53,8 +54,21 @@ app.config['SECRET_KEY'] = generate_random_string(16)
 app.config['SQLITE3_SETTINGS'] = {
     'host': 'db/bugtracker.sqlite'
 }
-if not app.testing:
-    db_session.global_init(app.config['SQLITE3_SETTINGS']['host'])
+
+# This for pythonwanywhere.com
+if __name__ != '__main__' and not app.testing:
+    app.root_path = os.path.dirname(os.path.abspath(__file__))
+    if sys.platform != 'win32':
+        app.config['SQLITE3_SETTINGS'] = {
+            'host': '/home/Sadn3ss/mysite/db/bugtracker.sqlite'
+        }
+    else:
+        app.config['SQLITE3_SETTINGS'] = {
+            'host': 'db/bugtracker.sqlite'
+        }
+
+
+db_session.global_init(app.config['SQLITE3_SETTINGS']['host'])
 
 # Init login manager
 login_manager = LoginManager()
@@ -733,6 +747,7 @@ def create_issue(project_id):
         issue_object.state = create_issue_form.state.data
         issue_object.description = create_issue_form.description.data
         issue_object.steps_to_reproduce = create_issue_form.steps_to_reproduce.data
+        issue_object.attachments = create_issue_form.attachments.data
         issue_object.project_id = project_id
         # Append issue_object to user and project
         project_object.issues.append(issue_object)
