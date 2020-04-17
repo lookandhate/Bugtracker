@@ -799,6 +799,7 @@ def change_issue(issue_tag: str):
     title = f'Change {issue_object.tracking}'
     # Creating issue form
     change_issue_form: forms.CreateIssue = forms.CreateIssue()
+    change_issue_form.submit.label = 'Update'
     change_issue_form.priority.choices = [(pr[0], pr[0]) for pr in issue_object.project[0].get_project_priorities()]
     change_issue_form.state.choices = [(st, st) for st in (
         'Unresolved', 'Fixed', 'Not bug', 'Cant reproduce', 'In progress', 'Fixed', 'Rejected')]
@@ -827,7 +828,7 @@ def change_issue(issue_tag: str):
         else:
             abort(404)
 
-    return render_template('new_issue.html', state='Change issue', title=title, project=issue_object.project[0],
+    return render_template('new_issue.html', state='Edit issue', title=title, project=issue_object.project[0],
                            form=change_issue_form)
 
 
