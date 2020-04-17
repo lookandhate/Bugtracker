@@ -717,7 +717,7 @@ def create_issue(project_id):
     :param project_id: project id in which we want to create new issue_object
     :return: Page rendered using new_issue.html template
     """
-    title = 'New issue_object'
+    title = 'New issue'
     # Creating db session
     session = db_session.create_session()
 
