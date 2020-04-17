@@ -69,7 +69,6 @@ if __name__ != '__main__' and not app.testing and os.path.exists('/home/Sadn3ss'
             'host': 'db/bugtracker.sqlite'
         }
 
-
 db_session.global_init(app.config['SQLITE3_SETTINGS']['host'])
 
 # Init login manager
@@ -290,6 +289,10 @@ def profile_projects(user_id):
         # Throw 404
         logger.info(f'User with id={user_id} doesnt exist')
         abort(404)
+    if current_user.id != user.id and not current_user.is_admin:
+        # Current user doesnt have access to other users issues, throw 403
+        logger.info(f'User {current_user.username} doesnt have access to {user.username}`s projects')
+        abort(403)
     title = f"{user.username}'s projects"
     return render_template('user_projects.html', title=title, user=user)
 
@@ -358,7 +361,7 @@ def new_project():
             logger.info(f'Project with project_name={creating_project_form.project_name.data} or'
                         f' project_tag={creating_project_form.short_project_tag.data} already exist')
             flash('Project with that name already created', 'alert alert-danger')
-            return redirect('project/new')
+            return redirect('/project/new')
 
         project_object = Project()
         project_object.project_name = creating_project_form.project_name.data
@@ -560,6 +563,10 @@ def remove_user_from_project(project_id):
 
     # Get user object
     user = session.query(User).filter(User.username == name).first()
+    # Check if root trying delete himself from project
+    if user == current_user:
+        flash('You cant just remove yourself from project', 'alert alert-danger')
+        return redirect(f'/projects/{project_id}/manage/members')
 
     # Get project object
     project_object = session.query(Project).filter(Project.id == project_id).first()
@@ -817,9 +824,9 @@ def change_issue(issue_tag: str):
         issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
         if issue_object:
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-                issue_object.steps_to_reproduce, issue_object.attachments = \
+            issue_object.steps_to_reproduce, issue_object.attachments = \
                 change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
-                change_issue_form.description.data, change_issue_form.steps_to_reproduce.data,\
+                change_issue_form.description.data, change_issue_form.steps_to_reproduce.data, \
                 change_issue_form.attachments.data
 
             session.commit()
