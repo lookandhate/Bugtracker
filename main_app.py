@@ -2,6 +2,8 @@ import os
 import hashlib
 import sys
 
+from typing import Optional
+
 from data.models import association_table_user_to_project
 
 from flask import render_template, flash, url_for, redirect, request, abort, send_from_directory
@@ -779,7 +781,7 @@ def change_issue(issue_tag: str):
     """
     session = db_session.create_session()
 
-    issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
+    issue_object: Optional[Issue] = session.query(Issue).filter(Issue.tracking == issue_tag).first()
     # Check does issue with that tag actually exist
     if issue_object is None:
         # If it doesn`t -> throw 404 error page
@@ -805,18 +807,19 @@ def change_issue(issue_tag: str):
         # IMPORTANT: USING GET CONDITION BECAUSE WITHOUT IT DATA FROM DATABASE REWRITES DATA IN FORM
         # Assign data from database to form fields
         change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
-        change_issue_form.description.data, change_issue_form.steps_to_reproduce.data = \
+        change_issue_form.description.data, change_issue_form.steps_to_reproduce.data, change_issue_form.attachments.data = \
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-            issue_object.steps_to_reproduce
+            issue_object.steps_to_reproduce, issue_object.attachments
 
     if change_issue_form.validate_on_submit():
         session = db_session.create_session()
         issue_object = session.query(Issue).filter(Issue.tracking == issue_tag).first()
         if issue_object:
             issue_object.summary, issue_object.priority, issue_object.state, issue_object.description, \
-            issue_object.steps_to_reproduce = \
+                issue_object.steps_to_reproduce, issue_object.attachments = \
                 change_issue_form.summary.data, change_issue_form.priority.data, change_issue_form.state.data, \
-                change_issue_form.description.data, change_issue_form.steps_to_reproduce.data
+                change_issue_form.description.data, change_issue_form.steps_to_reproduce.data,\
+                change_issue_form.attachments.data
 
             session.commit()
             flash(f'Info about issue {issue_object.tracking} successfully updated', 'alert alert-success')

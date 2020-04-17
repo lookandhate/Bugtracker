@@ -333,6 +333,7 @@ class Issue(SqlAlchemyBase, SerializerMixin):
     steps_to_reproduce = sqlalchemy.Column(sqlalchemy.String)
     summary = sqlalchemy.Column(sqlalchemy.String)
     date_of_creation = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now())
+    attachments = sqlalchemy.Column(sqlalchemy.String)
 
     project_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('projects.id'))
 
